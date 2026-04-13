@@ -10,22 +10,19 @@ const {
   SlashCommandBuilder
 } = require("discord.js");
 
+/* ---------------- CLIENT ---------------- */
+
 const client = new Client({
   intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
 
-/* -----------------------------
-   CONFIG
------------------------------ */
+/* ---------------- CONFIG ---------------- */
 
 const CLIENT_ID = "1425219882857005118";
 const NOTIFY_CHANNEL_ID = "1256688828165394432";
-
 const CACHE_TTL = 5 * 60 * 1000;
 
-/* -----------------------------
-   RANK SYSTEM
------------------------------ */
+/* ---------------- RANK MAP ---------------- */
 
 const rankScore = {
   Iron: 1,
@@ -39,25 +36,21 @@ const rankScore = {
   Radiant: 9
 };
 
-/* -----------------------------
-   ROLE MAPPING (RESTORED)
------------------------------ */
+/* ---------------- ROLE MAP ---------------- */
 
 const rankRoles = {
-  "Iron": "1493178517632974918",
-  "Bronze": "1493178996488405213",
-  "Silver": "1493179165212545094",
-  "Gold": "1493179278991294464",
-  "Platinum": "1493179323736391800",
-  "Diamond": "1493179479705780276",
-  "Ascendant": "1493179591261556864",
-  "Immortal": "1493179654457004062",
-  "Radiant": "1493179689819177082"
+  Iron: "1493178517632974918",
+  Bronze: "1493178996488405213",
+  Silver: "1493179165212545094",
+  Gold: "1493179278991294464",
+  Platinum: "1493179323736391800",
+  Diamond: "1493179479705780276",
+  Ascendant: "1493179591261556864",
+  Immortal: "1493179654457004062",
+  Radiant: "1493179689819177082"
 };
 
-/* -----------------------------
-   DATA STORAGE
------------------------------ */
+/* ---------------- DATA ---------------- */
 
 const DATA_FILE = "./data.json";
 
@@ -70,174 +63,160 @@ function saveData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-/* -----------------------------
-   CACHE
------------------------------ */
+/* ---------------- CACHE ---------------- */
 
 const cache = new Map();
 
-/* -----------------------------
-   TRACKER API
------------------------------ */
+/* ---------------- HENRIK API ---------------- */
 
-async function fetchProfile(riotId) {
-  const url = `https://api.tracker.gg/api/v2/valorant/standard/profile/riot/${encodeURIComponent(riotId)}`;
+async function fetchMMR(riotId) {
+  const [name, tag] = riotId.split("#");
+
+  const url = `https://api.henrikdev.xyz/valorant/v1/mmr/eu/${name}/${tag}`;
 
   const res = await axios.get(url, {
     headers: {
-      "TRN-Api-Key": process.env.TRACKER_API_KEY
+      Authorization: process.env.HENRIK_API_KEY
     }
   });
 
   return res.data.data;
 }
 
-/* -----------------------------
-   EXTRACT DATA
------------------------------ */
+async function fetchMatches(riotId) {
+  const [name, tag] = riotId.split("#");
 
-function extract(profile) {
-  const comp = profile.segments.find(s => s.type === "competitive");
-  const overview = profile.segments.find(s => s.type === "overview");
+  const url = `https://api.henrikdev.xyz/valorant/v3/matches/eu/${name}/${tag}?filter=competitive`;
 
-  return {
-    rank: comp?.stats?.tier?.displayName || "Unranked",
-    rr: comp?.stats?.rating?.value || 0,
-    wins: overview?.stats?.matchesWon?.value || 0,
-    losses: overview?.stats?.matchesLost?.value || 0,
-    kd: overview?.stats?.kdRatio?.value || 0,
-    kills: overview?.stats?.kills?.value || 0,
-    deaths: overview?.stats?.deaths?.value || 0,
-    assists: overview?.stats?.assists?.value || 0
-  };
-}
-
-/* -----------------------------
-   CACHE WRAPPER
------------------------------ */
-
-async function getPlayer(riotId, discordId) {
-  const now = Date.now();
-  const cached = cache.get(discordId);
-
-  if (cached && now - cached.lastFetch < CACHE_TTL) {
-    return cached;
-  }
-
-  const profile = await fetchProfile(riotId);
-  const data = extract(profile);
-
-  const result = {
-    ...data,
-    lastFetch: now
-  };
-
-  cache.set(discordId, result);
-  return result;
-}
-
-/* -----------------------------
-   HISTORY
------------------------------ */
-
-function updateHistory(userData, rr, rank) {
-  if (!userData.history) userData.history = [];
-
-  userData.history.push({
-    time: Date.now(),
-    rr,
-    rank
-  });
-
-  if (userData.history.length > 30) {
-    userData.history.shift();
-  }
-}
-
-/* -----------------------------
-   ROLE UPDATE
------------------------------ */
-
-async function updateRoles(member, oldRank, newRank) {
-  const oldTier = oldRank?.split(" ")[0];
-  const newTier = newRank?.split(" ")[0];
-
-  const roleId = rankRoles[newTier];
-  if (!roleId) return false;
-
-  // remove all rank roles
-  Object.values(rankRoles).forEach(id => {
-    if (member.roles.cache.has(id)) {
-      member.roles.remove(id).catch(() => {});
+  const res = await axios.get(url, {
+    headers: {
+      Authorization: process.env.HENRIK_API_KEY
     }
   });
 
-  await member.roles.add(roleId).catch(() => {});
-
-  return oldTier !== newTier;
+  return res.data.data;
 }
 
-/* -----------------------------
-   SYNC LOOP
------------------------------ */
+/* ---------------- MATCH PARSER (FIXED) ---------------- */
 
-async function syncAll() {
-  const data = loadData();
-  const guild = client.guilds.cache.first();
-  if (!guild) return;
+function extractMatchStats(matches, riotId) {
+  const [name, tag] = riotId.split("#");
 
-  for (const id of Object.keys(data)) {
-    try {
-      const member = await guild.members.fetch(id).catch(() => null);
-      if (!member) continue;
+  let kills = 0;
+  let deaths = 0;
+  let assists = 0;
+  let wins = 0;
+  let losses = 0;
 
-      const old = cache.get(id);
-      const p = await getPlayer(data[id].riotId, id);
+  const agentCount = {};
 
-      updateHistory(data[id], p.rr, p.rank);
+  if (!matches) {
+    return {
+      kills: 0,
+      deaths: 0,
+      assists: 0,
+      kd: 0,
+      wins: 0,
+      losses: 0,
+      favoriteAgent: "Unknown"
+    };
+  }
 
-      const rankUp = await updateRoles(member, old?.rank, p.rank);
+  for (const match of matches) {
+    const players = match.players?.all_players || [];
 
-      cache.set(id, p);
-      saveData(data);
+    const player = players.find(p =>
+      p.name?.toLowerCase() === name.toLowerCase() &&
+      p.tag?.toLowerCase() === tag.toLowerCase()
+    );
 
-      if (rankUp) {
-        const channel = guild.channels.cache.get(NOTIFY_CHANNEL_ID);
+    if (!player) continue;
 
-        if (channel) {
-          channel.send(
-            `📈 **Rank Up!** <@${member.id}> reached **${p.rank}**`
-          );
-        }
-      }
+    const stats = player.stats || {};
 
-    } catch {}
+    kills += stats.kills || 0;
+    deaths += stats.deaths || 0;
+    assists += stats.assists || 0;
+
+    const agent = player.character || "Unknown";
+    agentCount[agent] = (agentCount[agent] || 0) + 1;
+
+    const team = player.team?.toLowerCase();
+    const redWon = match.teams?.red?.has_won;
+    const blueWon = match.teams?.blue?.has_won;
+
+    if (
+      (team === "red" && redWon) ||
+      (team === "blue" && blueWon)
+    ) {
+      wins++;
+    } else {
+      losses++;
+    }
+  }
+
+  const favoriteAgent =
+    Object.entries(agentCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "Unknown";
+
+  return {
+    kills,
+    deaths,
+    assists,
+    kd: deaths ? (kills / deaths).toFixed(2) : kills,
+    wins,
+    losses,
+    favoriteAgent
+  };
+}
+
+/* ---------------- GET PLAYER ---------------- */
+
+async function getPlayer(riotId, discordId) {
+  const cached = cache.get(discordId);
+  if (cached && Date.now() - cached.lastFetch < CACHE_TTL) return cached;
+
+  try {
+    const mmr = await fetchMMR(riotId);
+    const matches = await fetchMatches(riotId);
+
+    const matchStats = extractMatchStats(matches, riotId);
+
+    const result = {
+      rank: mmr.currenttierpatched || "Unranked",
+      rr: mmr.ranking_in_tier || 0,
+      elo: mmr.elo || 0,
+      ...matchStats,
+      lastFetch: Date.now()
+    };
+
+    cache.set(discordId, result);
+    return result;
+
+  } catch (err) {
+    console.error("API ERROR:", err.response?.data || err.message);
+    return null;
   }
 }
 
-/* -----------------------------
-   COMMANDS
------------------------------ */
+/* ---------------- COMMANDS ---------------- */
 
 const commands = [
   new SlashCommandBuilder()
-  .setName("link")
-  .setDescription("Link your Riot account")
-  .addStringOption(o =>
-    o
-      .setName("riotid")
-      .setDescription("Your Riot ID (Name#TAG)")
-      .setRequired(true)
-  ),
-
-
-  new SlashCommandBuilder()
-    .setName("profile")
-    .setDescription("View stats"),
+    .setName("link")
+    .setDescription("Link Riot account")
+    .addStringOption(o =>
+      o.setName("riotid")
+        .setDescription("Name#TAG")
+        .setRequired(true)
+    ),
 
   new SlashCommandBuilder()
     .setName("rank")
     .setDescription("View rank"),
+
+  new SlashCommandBuilder()
+    .setName("profile")
+    .setDescription("View profile"),
 
   new SlashCommandBuilder()
     .setName("leaderboard")
@@ -253,22 +232,17 @@ async function registerCommands() {
   );
 }
 
-/* -----------------------------
-   EVENTS
------------------------------ */
+/* ---------------- READY ---------------- */
 
 client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
   await registerCommands();
 
-  syncAll();
-  setInterval(syncAll, 5 * 60 * 1000);
+  console.log("Commands registered.");
 });
 
-/* -----------------------------
-   COMMAND HANDLER
------------------------------ */
+/* ---------------- INTERACTIONS ---------------- */
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
@@ -276,8 +250,6 @@ client.on("interactionCreate", async (interaction) => {
   const data = loadData();
 
   try {
-
-    /* ---------------- LINK ---------------- */
 
     if (interaction.commandName === "link") {
       const riotId = interaction.options.getString("riotid");
@@ -292,8 +264,6 @@ client.on("interactionCreate", async (interaction) => {
       return interaction.reply(`✅ Linked **${riotId}**`);
     }
 
-    /* ---------------- RANK ---------------- */
-
     if (interaction.commandName === "rank") {
       await interaction.deferReply();
 
@@ -301,11 +271,10 @@ client.on("interactionCreate", async (interaction) => {
       if (!u) return interaction.editReply("❌ Not linked.");
 
       const p = await getPlayer(u.riotId, interaction.user.id);
+      if (!p) return interaction.editReply("❌ API error.");
 
       return interaction.editReply(`🎯 **${p.rank} (${p.rr} RR)**`);
     }
-
-    /* ---------------- PROFILE ---------------- */
 
     if (interaction.commandName === "profile") {
       await interaction.deferReply();
@@ -314,26 +283,23 @@ client.on("interactionCreate", async (interaction) => {
       if (!u) return interaction.editReply("❌ Not linked.");
 
       const p = await getPlayer(u.riotId, interaction.user.id);
-
-      if (!p) {
-        return interaction.editReply("❌ Could not fetch player data.");
-      }
+      if (!p) return interaction.editReply("❌ API error.");
 
       const embed = new EmbedBuilder()
         .setTitle("📊 Valorant Profile")
         .setColor(0x00ff99)
         .addFields(
-          { name: "Rank", value: p.rank || "Unknown", inline: true },
-          { name: "RR", value: String(p.rr ?? "0"), inline: true },
-          { name: "K/D", value: String(p.kd ?? "0"), inline: true },
-          { name: "K / D / A", value: `${p.kills ?? 0}/${p.deaths ?? 0}/${p.assists ?? 0}` },
-          { name: "Wins / Losses", value: `${p.wins ?? 0}W / ${p.losses ?? 0}L` }
+          { name: "Rank", value: p.rank, inline: true },
+          { name: "RR", value: String(p.rr), inline: true },
+          { name: "ELO", value: String(p.elo), inline: true },
+          { name: "K/D", value: String(p.kd), inline: true },
+          { name: "K / D / A", value: `${p.kills}/${p.deaths}/${p.assists}` },
+          { name: "Wins / Losses", value: `${p.wins}W / ${p.losses}L` },
+          { name: "Favorite Agent", value: p.favoriteAgent, inline: true }
         );
 
       return interaction.editReply({ embeds: [embed] });
     }
-
-    /* ---------------- LEADERBOARD ---------------- */
 
     if (interaction.commandName === "leaderboard") {
       await interaction.deferReply();
@@ -342,20 +308,16 @@ client.on("interactionCreate", async (interaction) => {
 
       for (const id of Object.keys(data)) {
         const u = data[id];
+        const p = await getPlayer(u.riotId, id);
 
-        try {
-          const p = await getPlayer(u.riotId, id);
+        if (!p) continue;
 
-          results.push({
-            riotId: u.riotId,
-            rank: p.rank || "Unranked",
-            score: rankScore[p.rank?.split(" ")[0]] || 0,
-            rr: p.rr || 0
-          });
-
-        } catch (err) {
-          console.error(`Leaderboard error for ${u.riotId}`, err);
-        }
+        results.push({
+          riotId: u.riotId,
+          rank: p.rank,
+          rr: p.rr,
+          score: rankScore[p.rank?.split(" ")[0]] || 0
+        });
       }
 
       results.sort((a, b) => b.score - a.score);
@@ -367,26 +329,18 @@ client.on("interactionCreate", async (interaction) => {
           results.slice(0, 10)
             .map((u, i) =>
               `**#${i + 1}** ${u.riotId}\n${u.rank} | ${u.rr} RR`
-            )
-            .join("\n\n") || "No data"
+            ).join("\n\n") || "No data"
         );
 
       return interaction.editReply({ embeds: [embed] });
     }
 
   } catch (err) {
-    console.error("Command error:", err);
-
-    if (interaction.deferred) {
-      return interaction.editReply("❌ Something went wrong.");
-    } else {
-      return interaction.reply("❌ Something went wrong.");
-    }
+    console.error("COMMAND ERROR:", err.message);
+    return interaction.reply("❌ Something went wrong.");
   }
 });
 
-/* -----------------------------
-   LOGIN
------------------------------ */
+/* ---------------- LOGIN ---------------- */
 
 client.login(process.env.DISCORD_TOKEN);
