@@ -221,11 +221,15 @@ async function syncAll() {
 
 const commands = [
   new SlashCommandBuilder()
-    .setName("link")
-    .setDescription("Link Riot ID")
-    .addStringOption(o =>
-      o.setName("riotid").setRequired(true)
-    ),
+  .setName("link")
+  .setDescription("Link your Riot account")
+  .addStringOption(o =>
+    o
+      .setName("riotid")
+      .setDescription("Your Riot ID (Name#TAG)")
+      .setRequired(true)
+  ),
+
 
   new SlashCommandBuilder()
     .setName("profile")
@@ -271,79 +275,113 @@ client.on("interactionCreate", async (interaction) => {
 
   const data = loadData();
 
-  if (interaction.commandName === "link") {
-    const riotId = interaction.options.getString("riotid");
+  try {
 
-    data[interaction.user.id] = {
-      riotId,
-      history: []
-    };
+    /* ---------------- LINK ---------------- */
 
-    saveData(data);
+    if (interaction.commandName === "link") {
+      const riotId = interaction.options.getString("riotid");
 
-    return interaction.reply(`✅ Linked **${riotId}**`);
-  }
+      data[interaction.user.id] = {
+        riotId,
+        history: []
+      };
 
-  if (interaction.commandName === "rank") {
-    const u = data[interaction.user.id];
-    if (!u) return interaction.reply("❌ Not linked.");
+      saveData(data);
 
-    const p = await getPlayer(u.riotId, interaction.user.id);
-
-    return interaction.reply(`🎯 **${p.rank} (${p.rr} RR)**`);
-  }
-
-  if (interaction.commandName === "profile") {
-    const u = data[interaction.user.id];
-    if (!u) return interaction.reply("❌ Not linked.");
-
-    const p = await getPlayer(u.riotId, interaction.user.id);
-
-    const embed = new EmbedBuilder()
-      .setTitle("📊 Valorant Profile")
-      .setColor(0x00ff99)
-      .addFields(
-        { name: "Rank", value: p.rank, inline: true },
-        { name: "RR", value: String(p.rr), inline: true },
-        { name: "K/D", value: String(p.kd), inline: true },
-        { name: "K / D / A", value: `${p.kills}/${p.deaths}/${p.assists}` },
-        { name: "Wins / Losses", value: `${p.wins}W / ${p.losses}L` }
-      );
-
-    return interaction.reply({ embeds: [embed] });
-  }
-
-  if (interaction.commandName === "leaderboard") {
-    const guild = interaction.guild;
-
-    const results = [];
-
-    for (const id of Object.keys(data)) {
-      const u = data[id];
-      const p = await getPlayer(u.riotId, id);
-
-      results.push({
-        riotId: u.riotId,
-        rank: p.rank,
-        score: rankScore[p.rank?.split(" ")[0]] || 0,
-        rr: p.rr
-      });
+      return interaction.reply(`✅ Linked **${riotId}**`);
     }
 
-    results.sort((a, b) => b.score - a.score);
+    /* ---------------- RANK ---------------- */
 
-    const embed = new EmbedBuilder()
-      .setTitle("🏆 Leaderboard")
-      .setColor(0xffd700)
-      .setDescription(
-        results.slice(0, 10)
-          .map((u, i) =>
-            `**#${i + 1}** ${u.riotId}\n${u.rank} | ${u.rr} RR`
-          )
-          .join("\n\n")
-      );
+    if (interaction.commandName === "rank") {
+      await interaction.deferReply();
 
-    return interaction.reply({ embeds: [embed] });
+      const u = data[interaction.user.id];
+      if (!u) return interaction.editReply("❌ Not linked.");
+
+      const p = await getPlayer(u.riotId, interaction.user.id);
+
+      return interaction.editReply(`🎯 **${p.rank} (${p.rr} RR)**`);
+    }
+
+    /* ---------------- PROFILE ---------------- */
+
+    if (interaction.commandName === "profile") {
+      await interaction.deferReply();
+
+      const u = data[interaction.user.id];
+      if (!u) return interaction.editReply("❌ Not linked.");
+
+      const p = await getPlayer(u.riotId, interaction.user.id);
+
+      if (!p) {
+        return interaction.editReply("❌ Could not fetch player data.");
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle("📊 Valorant Profile")
+        .setColor(0x00ff99)
+        .addFields(
+          { name: "Rank", value: p.rank || "Unknown", inline: true },
+          { name: "RR", value: String(p.rr ?? "0"), inline: true },
+          { name: "K/D", value: String(p.kd ?? "0"), inline: true },
+          { name: "K / D / A", value: `${p.kills ?? 0}/${p.deaths ?? 0}/${p.assists ?? 0}` },
+          { name: "Wins / Losses", value: `${p.wins ?? 0}W / ${p.losses ?? 0}L` }
+        );
+
+      return interaction.editReply({ embeds: [embed] });
+    }
+
+    /* ---------------- LEADERBOARD ---------------- */
+
+    if (interaction.commandName === "leaderboard") {
+      await interaction.deferReply();
+
+      const results = [];
+
+      for (const id of Object.keys(data)) {
+        const u = data[id];
+
+        try {
+          const p = await getPlayer(u.riotId, id);
+
+          results.push({
+            riotId: u.riotId,
+            rank: p.rank || "Unranked",
+            score: rankScore[p.rank?.split(" ")[0]] || 0,
+            rr: p.rr || 0
+          });
+
+        } catch (err) {
+          console.error(`Leaderboard error for ${u.riotId}`, err);
+        }
+      }
+
+      results.sort((a, b) => b.score - a.score);
+
+      const embed = new EmbedBuilder()
+        .setTitle("🏆 Leaderboard")
+        .setColor(0xffd700)
+        .setDescription(
+          results.slice(0, 10)
+            .map((u, i) =>
+              `**#${i + 1}** ${u.riotId}\n${u.rank} | ${u.rr} RR`
+            )
+            .join("\n\n") || "No data"
+        );
+
+      return interaction.editReply({ embeds: [embed] });
+    }
+
+  } catch (err) {
+    console.error("Command error:", err);
+
+    if (interaction.deferred) {
+      return interaction.editReply("❌ Something went wrong.");
+    } else {
+      return interaction.reply("❌ Something went wrong.");
+    }
   }
 });
 
