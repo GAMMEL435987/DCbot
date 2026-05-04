@@ -22,6 +22,42 @@ const CLIENT_ID = "1425219882857005118";
 const NOTIFY_CHANNEL_ID = "1256688828165394432";
 const CACHE_TTL = 5 * 60 * 1000;
 
+/* ---------------- MAP DATA ---------------- */
+
+const mapImages = {
+  ancient: [
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/de_ancient_radar.jpg/public"
+  ],
+  anubis: [
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/de_anubis_radar.jpg/public"
+  ],
+  cache: [
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/de_cache_radar.jpg/public"
+  ],
+  dust2: [
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/de_dust2_radar.jpg/public"
+  ],
+  inferno: [
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/de_inferno_radar.jpg/public"
+  ],
+  mirage: [
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/de_mirage_radar.jpg/public"
+  ],
+  nuke: [
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/de_nuke_radar.jpg/public"
+  ],
+  overpass: [
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/de_overpass_radar.jpg/public"
+  ],
+  train: [
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/NEW-de_train_radar_psd.png/public"
+  ],
+  vertigo: [
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/de_vertigoUP_radar.jpg/public",
+    "https://refrag.gg/cdn-cgi/imagedelivery/5wML_ikJr-qv52ESeLE6CQ/wordpress.refrag.gg/2023/12/de_vertigoDown__radar.jpg/public"
+  ]
+};
+
 /* ---------------- RANK MAP ---------------- */
 
 const rankScore = {
@@ -75,9 +111,7 @@ async function fetchMMR(riotId) {
   const url = `https://api.henrikdev.xyz/valorant/v1/mmr/eu/${name}/${tag}`;
 
   const res = await axios.get(url, {
-    headers: {
-      Authorization: process.env.HENRIK_API_KEY
-    }
+    headers: { Authorization: process.env.HENRIK_API_KEY }
   });
 
   return res.data.data;
@@ -89,37 +123,22 @@ async function fetchMatches(riotId) {
   const url = `https://api.henrikdev.xyz/valorant/v3/matches/eu/${name}/${tag}?filter=competitive`;
 
   const res = await axios.get(url, {
-    headers: {
-      Authorization: process.env.HENRIK_API_KEY
-    }
+    headers: { Authorization: process.env.HENRIK_API_KEY }
   });
 
   return res.data.data;
 }
 
-/* ---------------- MATCH PARSER (FIXED) ---------------- */
+/* ---------------- MATCH PARSER ---------------- */
 
 function extractMatchStats(matches, riotId) {
   const [name, tag] = riotId.split("#");
 
-  let kills = 0;
-  let deaths = 0;
-  let assists = 0;
-  let wins = 0;
-  let losses = 0;
-
+  let kills = 0, deaths = 0, assists = 0, wins = 0, losses = 0;
   const agentCount = {};
 
   if (!matches) {
-    return {
-      kills: 0,
-      deaths: 0,
-      assists: 0,
-      kd: 0,
-      wins: 0,
-      losses: 0,
-      favoriteAgent: "Unknown"
-    };
+    return { kills: 0, deaths: 0, assists: 0, kd: 0, wins: 0, losses: 0, favoriteAgent: "Unknown" };
   }
 
   for (const match of matches) {
@@ -145,10 +164,7 @@ function extractMatchStats(matches, riotId) {
     const redWon = match.teams?.red?.has_won;
     const blueWon = match.teams?.blue?.has_won;
 
-    if (
-      (team === "red" && redWon) ||
-      (team === "blue" && blueWon)
-    ) {
+    if ((team === "red" && redWon) || (team === "blue" && blueWon)) {
       wins++;
     } else {
       losses++;
@@ -205,9 +221,7 @@ const commands = [
     .setName("link")
     .setDescription("Link Riot account")
     .addStringOption(o =>
-      o.setName("riotid")
-        .setDescription("Name#TAG")
-        .setRequired(true)
+      o.setName("riotid").setDescription("Name#TAG").setRequired(true)
     ),
 
   new SlashCommandBuilder()
@@ -220,25 +234,43 @@ const commands = [
 
   new SlashCommandBuilder()
     .setName("leaderboard")
-    .setDescription("Server leaderboard")
+    .setDescription("Server leaderboard"),
+
+  // 🔥 NEW MAP COMMAND
+  new SlashCommandBuilder()
+    .setName("map")
+    .setDescription("CS Map mit Callouts anzeigen")
+    .addStringOption(option =>
+      option.setName("name")
+        .setDescription("Map auswählen")
+        .setRequired(true)
+        .addChoices(
+          { name: "Ancient", value: "ancient" },
+          { name: "Anubis", value: "anubis" },
+          { name: "Cache", value: "cache" },
+          { name: "Dust2", value: "dust2" },
+          { name: "Inferno", value: "inferno" },
+          { name: "Mirage", value: "mirage" },
+          { name: "Nuke", value: "nuke" },
+          { name: "Overpass", value: "overpass" },
+          { name: "Train", value: "train" },
+          { name: "Vertigo", value: "vertigo" }
+        )
+    )
+
 ].map(c => c.toJSON());
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 
 async function registerCommands() {
-  await rest.put(
-    Routes.applicationCommands(CLIENT_ID),
-    { body: commands }
-  );
+  await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
 }
 
 /* ---------------- READY ---------------- */
 
 client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}`);
-
   await registerCommands();
-
   console.log("Commands registered.");
 });
 
@@ -254,11 +286,7 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "link") {
       const riotId = interaction.options.getString("riotid");
 
-      data[interaction.user.id] = {
-        riotId,
-        history: []
-      };
-
+      data[interaction.user.id] = { riotId, history: [] };
       saveData(data);
 
       return interaction.reply(`✅ Linked **${riotId}**`);
@@ -309,7 +337,6 @@ client.on("interactionCreate", async (interaction) => {
       for (const id of Object.keys(data)) {
         const u = data[id];
         const p = await getPlayer(u.riotId, id);
-
         if (!p) continue;
 
         results.push({
@@ -335,8 +362,38 @@ client.on("interactionCreate", async (interaction) => {
       return interaction.editReply({ embeds: [embed] });
     }
 
+    // MAP COMMAND HANDLER
+    if (interaction.commandName === "map") {
+  const mapName = interaction.options.getString("name");
+  const images = mapImages[mapName];
+
+  if (!images) {
+    return interaction.reply({
+      content: "❌ Map nicht gefunden.",
+      ephemeral: true
+    });
+  }
+
+  const embeds = [
+    new EmbedBuilder()
+      .setTitle(`🗺️ ${mapName.toUpperCase()} Callouts`)
+      .setColor(0x0099ff)
+      .setImage(images[0])
+  ];
+
+  for (let i = 1; i < images.length; i++) {
+    embeds.push(
+      new EmbedBuilder()
+        .setColor(0x0099ff)
+        .setImage(images[i])
+    );
+  }
+
+  return interaction.reply({ embeds });
+}
+
   } catch (err) {
-    console.error("COMMAND ERROR:", err.message);
+    console.error("COMMAND ERROR:", err);
     return interaction.reply("❌ Something went wrong.");
   }
 });
