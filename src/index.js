@@ -272,9 +272,11 @@ async function registerCommands() {
 client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  client.user.setActivity("Tax Fraud Simulator", {
-    type: ActivityType.Playing,
-  });
+  setTimeout(() => {
+    client.user.setActivity("Tax Fraud Simulator", {
+      type: ActivityType.Playing,
+    });
+  }, 2000);
 
   await registerCommands();
   console.log("Commands registered.");
