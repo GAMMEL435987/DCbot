@@ -272,18 +272,22 @@ async function registerCommands() {
 client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  client.user.setPresence({
-    activities: [
-      {
-        name: "Tax Fraud Simulator",
-        type: 0, // Playing
-      },
-    ],
-    status: "online",
-  });
-
   await registerCommands();
   console.log("Commands registered.");
+
+  setTimeout(() => {
+    client.user.setPresence({
+      activities: [
+        {
+          name: "Tax Fraud Simulator",
+          type: 0,
+        },
+      ],
+      status: "online",
+    });
+
+    console.log("Presence set");
+  }, 3000);
 });
 
 /* ---------------- INTERACTIONS ---------------- */
