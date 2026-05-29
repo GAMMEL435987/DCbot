@@ -7,7 +7,8 @@ const {
   EmbedBuilder,
   REST,
   Routes,
-  SlashCommandBuilder
+  SlashCommandBuilder,
+  ActivityType
 } = require("discord.js");
 
 /* ---------------- CLIENT ---------------- */
@@ -270,6 +271,11 @@ async function registerCommands() {
 
 client.once("ready", async () => {
   console.log(`Logged in as ${client.user.tag}`);
+
+  client.user.setActivity("Tax Fraud Simulator", {
+    type: ActivityType.Playing,
+  });
+
   await registerCommands();
   console.log("Commands registered.");
 });
