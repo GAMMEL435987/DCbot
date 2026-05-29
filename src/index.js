@@ -285,7 +285,7 @@ client.once("ready", () => {
     });
 
     console.log("Presence set successfully");
-  }, 5000);
+  }, 20000);
 });
 
 /* ---------------- INTERACTIONS ---------------- */
