@@ -277,7 +277,7 @@ client.once("ready", () => {
     client.user.setPresence({
       activities: [
         {
-          name: "playing Tax Fraud Simulator",
+          name: "Playing Tax Fraud Simulator",
           type: 0, // Playing
         },
       ],
