@@ -269,25 +269,23 @@ async function registerCommands() {
 
 /* ---------------- READY ---------------- */
 
-client.once("ready", async () => {
+client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  await registerCommands();
-  console.log("Commands registered.");
-
+  // WICHTIG: Presence erst nach kompletter Stabilisierung setzen
   setTimeout(() => {
     client.user.setPresence({
       activities: [
         {
           name: "Tax Fraud Simulator",
-          type: 0,
+          type: 0, // Playing
         },
       ],
       status: "online",
     });
 
-    console.log("Presence set");
-  }, 3000);
+    console.log("Presence set successfully");
+  }, 5000);
 });
 
 /* ---------------- INTERACTIONS ---------------- */
