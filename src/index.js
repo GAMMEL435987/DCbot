@@ -272,7 +272,6 @@ async function registerCommands() {
 client.once("ready", () => {
   console.log(`Logged in as ${client.user.tag}`);
 
-  // WICHTIG: Presence erst nach kompletter Stabilisierung setzen
   setTimeout(() => {
     client.user.setPresence({
       activities: [
@@ -286,6 +285,10 @@ client.once("ready", () => {
 
     console.log("Presence set successfully");
   }, 3000);
+});
+
+client.on("guildMemberAdd", member => {
+  member.roles.add("1256399787654119425");
 });
 
 /* ---------------- INTERACTIONS ---------------- */
