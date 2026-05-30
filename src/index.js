@@ -95,8 +95,15 @@ const rankRoles = {
 const DATA_FILE = "./data.json";
 
 function loadData() {
-  if (!fs.existsSync(DATA_FILE)) return {};
-  return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+  try {
+    if (!fs.existsSync(DATA_FILE)) return {}
+    const raw = fs.readFileSync(DATA_FILE, "utf8")
+    if (!raw) return {}
+    return JSON.parse(raw)
+  } catch (e) {
+    console.log("DATA FILE CORRUPT -> RESET")
+    return {}
+  }
 }
 
 function saveData(data) {
