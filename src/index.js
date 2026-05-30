@@ -1,4 +1,7 @@
 require("dotenv").config();
+const voiceStart = new Map()
+let data = loadData()
+let dirty = false
 const fs = require("fs");
 const axios = require("axios");
 const {
@@ -100,6 +103,17 @@ function saveData(data) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
+function ensureXPUser(data, id) {
+  if (!data[id]) {
+    data[id] = {
+      words: 0,
+      voiceSeconds: 0,
+      riotId: null,
+      history: []
+    }
+  }
+}
+
 /* ---------------- CACHE ---------------- */
 
 const cache = new Map();
@@ -187,6 +201,32 @@ function extractMatchStats(matches, riotId) {
 }
 
 /* ---------------- GET PLAYER ---------------- */
+
+async function checkXP(guild) {
+  let data = loadData()
+
+  const vipRoleId = "1318994760689647753"
+  const mvpRoleId = "1318997600455757956"
+
+  const vipRole = guild.roles.cache.get(vipRoleId)
+  const mvpRole = guild.roles.cache.get(mvpRoleId)
+
+  for (const id in data) {
+    const u = data[id]
+
+    const member = await guild.members.fetch(id).catch(() => null)
+    if (!member) continue
+
+    const hours = u.voiceSeconds / 3600
+    const words = u.words
+
+    if (hours >= 20 && words >= 1000) {
+      if (mvpRole) member.roles.add(mvpRole)
+    } else if (hours >= 10 || words >= 500) {
+      if (vipRole) member.roles.add(vipRole)
+    }
+  }
+}
 
 async function getPlayer(riotId, discordId) {
   const cached = cache.get(discordId);
@@ -292,6 +332,41 @@ client.on("guildMemberAdd", member => {
 });
 
 /* ---------------- INTERACTIONS ---------------- */
+
+client.on("messageCreate", (message) => {
+  if (message.author.bot) return
+
+  ensureXPUser(data, message.author.id)
+
+  const words = message.content.trim().split(/\s+/).length
+
+  data[message.author.id].words += words
+
+  dirty = true
+})
+
+client.on("voiceStateUpdate", (oldState, newState) => {
+  const id = newState.id || oldState.id
+
+  ensureXPUser(data, id)
+
+  if (!oldState.channel && newState.channel) {
+    voiceStart.set(id, Date.now())
+  }
+
+  if (oldState.channel && !newState.channel) {
+    const start = voiceStart.get(id)
+    if (!start) return
+
+    const seconds = Math.floor((Date.now() - start) / 1000)
+
+    data[id].voiceSeconds += seconds
+
+    voiceStart.delete(id)
+
+    dirty = true
+  }
+})
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
@@ -414,6 +489,19 @@ client.on("interactionCreate", async (interaction) => {
     return interaction.reply("❌ Something went wrong.");
   }
 });
+
+setInterval(() => {
+  const guild = client.guilds.cache.first();
+  if (!guild) return;
+
+  checkXP(guild);
+}, 10 * 60 * 1000);
+
+setInterval(() => {
+  if (!dirty) return
+  saveData(data)
+  dirty = false
+}, 30000)
 
 /* ---------------- LOGIN ---------------- */
 
