@@ -248,11 +248,11 @@ async function checkXP(guild) {
     const hours = u.voiceSeconds / 3600;
     const words = u.words;
 
-    if (hours >= 20 && words >= 1000) {
+    if (hours >= 25 && words >= 1000) { // <---------------------- MVP REQUIREMENTS
       if (mvpRole && !member.roles.cache.has(mvpRole.id)) {
         await member.roles.add(mvpRole).catch(() => {});
       }
-    } else if (hours >= 10 || words >= 500) {
+    } else if (hours >= 10 || words >= 500) { // <---------------------- VIP REQUIREMENTS
       if (vipRole && !member.roles.cache.has(vipRole.id)) {
         await member.roles.add(vipRole).catch(() => {});
       }

@@ -1,3 +1,5 @@
 node_modules
 .env
 data.json
+leveling_system_data.json
+valorant_data.json
