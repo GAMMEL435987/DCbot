@@ -122,7 +122,10 @@ function loadValorantData() {
 }
 
 function saveLevelingData() {
-  fs.writeFileSync(LEVELING_FILE, JSON.stringify(levelingData, null, 2))
+  fs.writeFileSync(
+    LEVELING_FILE,
+    JSON.stringify(levelingData, null, 2)
+  );
 }
 
 function saveValorantData() {
@@ -362,39 +365,45 @@ client.on("guildMemberAdd", member => {
 /* ---------------- INTERACTIONS ---------------- */
 
 client.on("messageCreate", (message) => {
-  if (message.author.bot) return
+  if (message.author.bot) return;
 
-  ensureXPUser(levelingData, message.author.id)
+  const id = message.author.id;
+  ensureXPUser(levelingData, id);
 
-  const words = message.content.trim().split(/\s+/).length
+  const words = message.content?.trim()
+    ? message.content.trim().split(/\s+/).length
+    : 0;
 
-  levelingData[message.author.id].words += words
+  levelingData[id].words += words;
 
-  dirty = true
-})
+  saveLevelingData();
+});
 
 client.on("voiceStateUpdate", (oldState, newState) => {
   const id = newState?.member?.id || oldState?.member?.id;
   if (!id) return;
-  ensureXPUser(levelingData, id)
 
+  ensureXPUser(levelingData, id);
+
+  // user joins voice
   if (!oldState.channel && newState.channel) {
-    voiceStart.set(id, Date.now())
+    voiceStart.set(id, Date.now());
   }
 
+  // user leaves voice
   if (oldState.channel && !newState.channel) {
-    const start = voiceStart.get(id)
-    if (!start) return
+    const start = voiceStart.get(id);
+    if (!start) return;
 
-    const seconds = Math.floor((Date.now() - start) / 1000)
+    const seconds = Math.floor((Date.now() - start) / 1000);
 
-    levelingData[id].voiceSeconds += seconds
+    levelingData[id].voiceSeconds += seconds;
 
-    voiceStart.delete(id)
+    voiceStart.delete(id);
 
-    dirty = true
+    saveLevelingData();
   }
-})
+});
 
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
@@ -524,12 +533,6 @@ setInterval(() => {
 
   checkXP(guild);
 }, 10 * 60 * 1000);
-
-setInterval(() => {
-  if (!dirty) return
-  saveLevelingData()
-  dirty = false
-}, 30000)
 
 /* ---------------- LOGIN ---------------- */
 
