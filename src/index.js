@@ -1,7 +1,8 @@
 require("dotenv").config();
 const voiceStart = new Map()
-const LEVELING_FILE = "./leveling_system_data.json";
-const VALORANT_FILE = "./valorant_data.json";
+const path = require("path");
+const LEVELING_FILE = path.join(__dirname, "../leveling_system_data.json");
+const VALORANT_FILE = path.join(__dirname, "../valorant_data.json");
 let levelingData = loadLevelingData()
 let valorantData = loadValorantData()
 let dirty = false
@@ -365,35 +366,18 @@ client.on("guildMemberAdd", member => {
 /* ---------------- INTERACTIONS ---------------- */
 
 client.on("messageCreate", (message) => {
-  console.log("1");
-
   if (message.author.bot) return;
 
-  console.log("2");
-
   const id = message.author.id;
-
-  console.log("3", id);
-
   ensureXPUser(levelingData, id);
-
-  console.log("4");
 
   const words = message.content?.trim()
     ? message.content.trim().split(/\s+/).length
     : 0;
 
-  console.log("5", words);
-
-  console.log("USER:", levelingData[id]);
-
   levelingData[id].words += words;
 
-  console.log("6");
-
   saveLevelingData();
-
-  console.log("7");
 });
 
 client.on("voiceStateUpdate", (oldState, newState) => {
