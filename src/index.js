@@ -1,6 +1,9 @@
 require("dotenv").config();
 const voiceStart = new Map()
-let data = loadData()
+const LEVELING_FILE = "./leveling_system_data.json";
+const VALORANT_FILE = "./valorant_data.json";
+let levelingData = loadLevelingData()
+let valorantData = loadValorantData()
 let dirty = false
 const fs = require("fs");
 const axios = require("axios");
@@ -98,22 +101,34 @@ const rankRoles = {
 
 /* ---------------- DATA ---------------- */
 
-const DATA_FILE = "./data.json";
+const LEVELING_FILE = "./leveling_system_data.json";
 
-function loadData() {
+function loadLevelingData() {
   try {
-    if (!fs.existsSync(DATA_FILE)) return {}
-    const raw = fs.readFileSync(DATA_FILE, "utf8")
-    if (!raw) return {}
-    return JSON.parse(raw)
-  } catch (e) {
-    console.log("DATA FILE CORRUPT -> RESET")
+    if (!fs.existsSync(LEVELING_FILE)) return {}
+    const raw = fs.readFileSync(LEVELING_FILE, "utf8")
+    return raw ? JSON.parse(raw) : {}
+  } catch {
     return {}
   }
 }
 
-function saveData(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+function loadValorantData() {
+  try {
+    if (!fs.existsSync(VALORANT_FILE)) return {}
+    const raw = fs.readFileSync(VALORANT_FILE, "utf8")
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
+
+function saveLevelingData() {
+  fs.writeFileSync(LEVELING_FILE, JSON.stringify(levelingData, null, 2))
+}
+
+function saveValorantData() {
+  fs.writeFileSync(VALORANT_FILE, JSON.stringify(valorantData, null, 2))
 }
 
 function ensureXPUser(data, id) {
@@ -216,7 +231,7 @@ function extractMatchStats(matches, riotId) {
 /* ---------------- GET PLAYER ---------------- */
 
 async function checkXP(guild) {
-  let data = loadData()
+  for (const id in levelingData)
 
   const vipRoleId = "1318994760689647753"
   const mvpRoleId = "1318997600455757956"
@@ -349,19 +364,18 @@ client.on("guildMemberAdd", member => {
 client.on("messageCreate", (message) => {
   if (message.author.bot) return
 
-  ensureXPUser(data, message.author.id)
+  ensureXPUser(levelingData, message.author.id)
 
   const words = message.content.trim().split(/\s+/).length
 
-  data[message.author.id].words += words
+  levelingData[message.author.id].words += words
 
   dirty = true
 })
 
 client.on("voiceStateUpdate", (oldState, newState) => {
   const id = newState.id || oldState.id
-
-  ensureXPUser(data, id)
+  ensureXPUser(levelingData, id)
 
   if (!oldState.channel && newState.channel) {
     voiceStart.set(id, Date.now())
@@ -373,7 +387,7 @@ client.on("voiceStateUpdate", (oldState, newState) => {
 
     const seconds = Math.floor((Date.now() - start) / 1000)
 
-    data[id].voiceSeconds += seconds
+    levelingData[id].voiceSeconds += seconds
 
     voiceStart.delete(id)
 
@@ -384,15 +398,16 @@ client.on("voiceStateUpdate", (oldState, newState) => {
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  const data = loadData();
+  const levelingData = loadLevelingData();
+  const valorantData = loadValorantData();
 
   try {
 
     if (interaction.commandName === "link") {
       const riotId = interaction.options.getString("riotid");
 
-      data[interaction.user.id] = { riotId, history: [] };
-      saveData(data);
+      valorantData[interaction.user.id] = { riotId, history: [] }
+      saveValorantData()
 
       return interaction.reply(`✅ Linked **${riotId}**`);
     }
@@ -400,7 +415,7 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "rank") {
       await interaction.deferReply();
 
-      const u = data[interaction.user.id];
+      const u = valorantData[interaction.user.id];
       if (!u) return interaction.editReply("❌ Not linked.");
 
       const p = await getPlayer(u.riotId, interaction.user.id);
@@ -412,7 +427,7 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "profile") {
       await interaction.deferReply();
 
-      const u = data[interaction.user.id];
+      const u = valorantData[interaction.user.id];
       if (!u) return interaction.editReply("❌ Not linked.");
 
       const p = await getPlayer(u.riotId, interaction.user.id);
@@ -512,7 +527,7 @@ setInterval(() => {
 
 setInterval(() => {
   if (!dirty) return
-  saveData(data)
+  saveLevelingData()
   dirty = false
 }, 30000)
 
