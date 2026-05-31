@@ -2,7 +2,7 @@ require("dotenv").config();
 const voiceStart = new Map()
 const path = require("path");
 const LEVELING_FILE = path.join(__dirname, "../leveling_system_data.json");
-const VALORANT_FILE = path.join(__dirname, "../valorant_data.json");
+const VALORANT_FILE = path.resolve(process.cwd(), "valorant_data.json");
 let levelingData = loadLevelingData()
 let valorantData = loadValorantData()
 let dirty = false
@@ -416,6 +416,7 @@ client.on("interactionCreate", async (interaction) => {
 
       valorantData[interaction.user.id] = { riotId, history: [] };
       saveValorantData();
+      valorantData = loadValorantData();
 
       return interaction.reply(`✅ Linked **${riotId}**`);
     }
@@ -434,8 +435,8 @@ client.on("interactionCreate", async (interaction) => {
 
     if (interaction.commandName === "profile") {
       await interaction.deferReply();
-
-      const u = valorantData?.[interaction.user.id];
+      valorantData = loadValorantData();
+      const u = valorantData[interaction.user.id];
       if (!u || !u.riotId) return interaction.editReply("❌ Not linked.");
 
       const p = await getPlayer(u.riotId, interaction.user.id);
