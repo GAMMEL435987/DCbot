@@ -258,10 +258,10 @@ async function checkXP(guild) {
 
 async function getPlayer(riotId, discordId) {
   const cached = cache.get(discordId);
-  if (cached && Date.now() - cached.lastFetch < CACHE_TTL) return cached;
+  if (cached?.lastFetch && Date.now() - cached.lastFetch < CACHE_TTL) return cached;
 
   try {
-    const mmr = await fetchMMR(riotId);
+    const mmr = (await fetchMMR(riotId)) || {};
     const matches = await fetchMatches(riotId);
 
     const matchStats = extractMatchStats(matches, riotId);
@@ -399,16 +399,13 @@ client.on("voiceStateUpdate", (oldState, newState) => {
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
-  const levelingData = loadLevelingData();
-  const valorantData = loadValorantData();
-
   try {
 
     if (interaction.commandName === "link") {
       const riotId = interaction.options.getString("riotid");
 
-      valorantData[interaction.user.id] = { riotId, history: [] }
-      saveValorantData()
+      valorantData[interaction.user.id] = { riotId, history: [] };
+      saveValorantData();
 
       return interaction.reply(`✅ Linked **${riotId}**`);
     }
@@ -428,8 +425,8 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "profile") {
       await interaction.deferReply();
 
-      const u = valorantData[interaction.user.id];
-      if (!u) return interaction.editReply("❌ Not linked.");
+      const u = valorantData?.[interaction.user.id];
+      if (!u || !u.riotId) return interaction.editReply("❌ Not linked.");
 
       const p = await getPlayer(u.riotId, interaction.user.id);
       if (!p) return interaction.editReply("❌ API error.");
