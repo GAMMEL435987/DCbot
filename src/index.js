@@ -365,19 +365,35 @@ client.on("guildMemberAdd", member => {
 /* ---------------- INTERACTIONS ---------------- */
 
 client.on("messageCreate", (message) => {
-  console.log("MESSAGE EVENT FIRED");
+  console.log("1");
+
   if (message.author.bot) return;
 
+  console.log("2");
+
   const id = message.author.id;
+
+  console.log("3", id);
+
   ensureXPUser(levelingData, id);
+
+  console.log("4");
 
   const words = message.content?.trim()
     ? message.content.trim().split(/\s+/).length
     : 0;
 
+  console.log("5", words);
+
+  console.log("USER:", levelingData[id]);
+
   levelingData[id].words += words;
 
+  console.log("6");
+
   saveLevelingData();
+
+  console.log("7");
 });
 
 client.on("voiceStateUpdate", (oldState, newState) => {
