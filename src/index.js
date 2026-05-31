@@ -101,8 +101,6 @@ const rankRoles = {
 
 /* ---------------- DATA ---------------- */
 
-const LEVELING_FILE = "./leveling_system_data.json";
-
 function loadLevelingData() {
   try {
     if (!fs.existsSync(LEVELING_FILE)) return {}
@@ -231,27 +229,29 @@ function extractMatchStats(matches, riotId) {
 /* ---------------- GET PLAYER ---------------- */
 
 async function checkXP(guild) {
-  for (const id in levelingData)
+  const vipRoleId = "1318994760689647753";
+  const mvpRoleId = "1318997600455757956";
 
-  const vipRoleId = "1318994760689647753"
-  const mvpRoleId = "1318997600455757956"
+  const vipRole = guild.roles.cache.get(vipRoleId);
+  const mvpRole = guild.roles.cache.get(mvpRoleId);
 
-  const vipRole = guild.roles.cache.get(vipRoleId)
-  const mvpRole = guild.roles.cache.get(mvpRoleId)
+  for (const id in levelingData) {
+    const u = levelingData[id];
 
-  for (const id in data) {
-    const u = data[id]
+    const member = await guild.members.fetch(id).catch(() => null);
+    if (!member) continue;
 
-    const member = await guild.members.fetch(id).catch(() => null)
-    if (!member) continue
-
-    const hours = u.voiceSeconds / 3600
-    const words = u.words
+    const hours = u.voiceSeconds / 3600;
+    const words = u.words;
 
     if (hours >= 20 && words >= 1000) {
-      if (mvpRole) member.roles.add(mvpRole)
+      if (mvpRole && !member.roles.cache.has(mvpRole.id)) {
+        await member.roles.add(mvpRole).catch(() => {});
+      }
     } else if (hours >= 10 || words >= 500) {
-      if (vipRole) member.roles.add(vipRole)
+      if (vipRole && !member.roles.cache.has(vipRole.id)) {
+        await member.roles.add(vipRole).catch(() => {});
+      }
     }
   }
 }
@@ -305,7 +305,7 @@ const commands = [
     .setName("leaderboard")
     .setDescription("Server leaderboard"),
 
-  // 🔥 NEW MAP COMMAND
+  // MAP COMMAND
   new SlashCommandBuilder()
     .setName("map")
     .setDescription("CS Map mit Callouts anzeigen")
@@ -374,7 +374,8 @@ client.on("messageCreate", (message) => {
 })
 
 client.on("voiceStateUpdate", (oldState, newState) => {
-  const id = newState.id || oldState.id
+  const id = newState?.member?.id || oldState?.member?.id;
+  if (!id) return;
   ensureXPUser(levelingData, id)
 
   if (!oldState.channel && newState.channel) {
@@ -454,16 +455,18 @@ client.on("interactionCreate", async (interaction) => {
 
       const results = [];
 
-      for (const id of Object.keys(data)) {
-        const u = data[id];
+      for (const id of Object.keys(valorantData)) {
+        const u = valorantData[id];
         const p = await getPlayer(u.riotId, id);
         if (!p) continue;
+
+        const baseRank = (p.rank || "Unrated").split(" ")[0];
 
         results.push({
           riotId: u.riotId,
           rank: p.rank,
           rr: p.rr,
-          score: rankScore[p.rank?.split(" ")[0]] || 0
+          score: rankScore[baseRank] || 0
         });
       }
 
