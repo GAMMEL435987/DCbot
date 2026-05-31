@@ -365,7 +365,7 @@ client.on("guildMemberAdd", member => {
 /* ---------------- INTERACTIONS ---------------- */
 
 client.on("messageCreate", (message) => {
-  console.log("MESSAGE EVENT:", message.content);
+  console.log("MESSAGE EVENT FIRED");
   if (message.author.bot) return;
 
   const id = message.author.id;
