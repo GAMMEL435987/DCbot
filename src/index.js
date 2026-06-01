@@ -236,10 +236,11 @@ function extractMatchStats(matches, riotId) {
   let playedMatches = 0;
 
   for (const match of matches) {
-    const players = match.players || [];
+    const players = match.players?.all_players || [];
 
     const player = players.find(p =>
-      `${p.name}#${p.tag}`.toLowerCase() === riotId.toLowerCase()
+      p.name?.toLowerCase() === name.toLowerCase() &&
+      p.tag?.toLowerCase() === tag.toLowerCase()
     );
 
     if (!player) continue;
@@ -256,12 +257,12 @@ function extractMatchStats(matches, riotId) {
     bodyshots += player.stats?.bodyshots || 0;
     legshots += player.stats?.legshots || 0;
 
-    const agent = player.character?.display_name || "Unknown";
+    const agent = player.character || "Unknown";
     agentCount[agent] = (agentCount[agent] || 0) + 1;
 
-    const team = player.team_id?.toLowerCase();
-    const redWon = match.teams?.find(t => t.team_id === "Red")?.won;
-    const blueWon = match.teams?.find(t => t.team_id === "Blue")?.won;
+    const team = player.team?.toLowerCase();
+    const redWon = match.teams?.red?.has_won;
+    const blueWon = match.teams?.blue?.has_won;
 
     if (
       (team === "red" && redWon) ||
@@ -342,7 +343,7 @@ async function getPlayer(riotId, discordId) {
     const mmr = (await fetchMMR(riotId)) || {};
     const account = (await fetchAccount(riotId)) || {};
     const matches = await fetchMatches(riotId);
-    console.log("MATCH COUNT:", matches.length);
+    console.log("MATCHES:", matches.length);
 
     const matchStats = extractMatchStats(matches, riotId);
 
@@ -352,7 +353,10 @@ async function getPlayer(riotId, discordId) {
       level: account.account_level || 0,
 
       rank: mmr.currenttierpatched || "Unranked",
-      peakRank: mmr.highest_rank?.patched_tier_name || "Unknown",
+      peakRank:
+        mmr.highest_rank?.patched_tier ||
+        mmr.highest_rank?.patched_tier_name ||
+        "Unknown",
 
       rr: mmr.ranking_in_tier || 0,
       elo: mmr.elo || 0,
