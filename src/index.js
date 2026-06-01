@@ -571,12 +571,6 @@ client.on("interactionCreate", async (interaction) => {
     inline: true
   },
 
-    {
-    name: "🏅 Winrate",
-    value: `>>> ${p.winrate}%`,
-    inline: true
-  },
-
   {
     name: "💎 RR",
     value: `>>> ${p.rr}`,
@@ -584,9 +578,15 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
+    name: "🏅 Winrate",
+    value: `>>> ${p.winrate}%`,
+    inline: false
+  },
+
+  {
     name: "⚔️ K/D",
     value: `>>> ${p.kd}`,
-    inline: false
+    inline: true
   },
 
   {
