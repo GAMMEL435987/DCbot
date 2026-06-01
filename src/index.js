@@ -74,6 +74,18 @@ const mapImages = {
 
 /* ---------------- RANK MAP ---------------- */
 
+const rankEmojis = {
+  Iron: "<:iron:YOUR_ID>",
+  Bronze: "<:bronze:YOUR_ID>",
+  Silver: "<:silver:YOUR_ID>",
+  Gold: "<:gold:YOUR_ID>",
+  Platinum: "<:platinum:YOUR_ID>",
+  Diamond: "<:diamond:YOUR_ID>",
+  Ascendant: "<:ascendant:YOUR_ID>",
+  Immortal: "<:immortal:YOUR_ID>",
+  Radiant: "<:radiant:YOUR_ID>"
+};
+
 const rankScore = {
   Iron: 1,
   Bronze: 2,
@@ -177,10 +189,12 @@ async function fetchAccount(riotId) {
 async function fetchMatches(riotId) {
   const [name, tag] = riotId.split("#");
 
-  const url = `https://api.henrikdev.xyz/valorant/v3/matches/eu/${name}/${tag}?filter=competitive`;
+  const url = `https://api.henrikdev.xyz/valorant/v4/matches/eu/pc/${name}/${tag}?mode=competitive&size=50`;
 
   const res = await axios.get(url, {
-    headers: { Authorization: process.env.HENRIK_API_KEY }
+    headers: {
+      Authorization: process.env.HENRIK_API_KEY
+    }
   });
 
   return res.data.data;
@@ -221,7 +235,7 @@ function extractMatchStats(matches, riotId) {
   let playedMatches = 0;
 
   for (const match of matches) {
-    const players = match.players?.all_players || [];
+    const players = match.players || [];
 
     const player = players.find(p =>
       p.name?.toLowerCase() === name.toLowerCase() &&
@@ -238,16 +252,16 @@ function extractMatchStats(matches, riotId) {
     deaths += stats.deaths || 0;
     assists += stats.assists || 0;
 
-    headshots += stats.headshots || 0;
-    bodyshots += stats.bodyshots || 0;
-    legshots += stats.legshots || 0;
+    headshots += player.stats?.headshots || 0;
+    bodyshots += player.stats?.bodyshots || 0;
+    legshots += player.stats?.legshots || 0;
 
     const agent = player.character || "Unknown";
     agentCount[agent] = (agentCount[agent] || 0) + 1;
 
     const team = player.team?.toLowerCase();
-    const redWon = match.teams?.red?.has_won;
-    const blueWon = match.teams?.blue?.has_won;
+    const redWon = match.teams?.red?.won;
+    const blueWon = match.teams?.blue?.won;
 
     if (
       (team === "red" && redWon) ||
@@ -511,78 +525,80 @@ client.on("interactionCreate", async (interaction) => {
       const p = await getPlayer(u.riotId, interaction.user.id);
       if (!p) return interaction.editReply("❌ API error.");
 
+      const rankBase = p.rank.split(" ")[0];
+      const peakBase = p.peakRank.split(" ")[0];
+
+      const rankEmoji = rankEmojis[rankBase] || "";
+      const peakEmoji = rankEmojis[peakBase] || "";
+      
       const embed = new EmbedBuilder()
         .setTitle("📊 Valorant Profile")
         .setColor(0x00ff99)
         .addFields(
+
   {
-    name: "Riot ID",
-    value: `${p.name}#${p.tag}`,
+    name: "👤 Riot ID",
+    value: `>>> ${p.name}#${p.tag}`,
+    inline: false
+  },
+
+  {
+    name: "🎖️ Level",
+    value: `>>> ${p.level}`,
     inline: true
   },
 
   {
-    name: "Level",
-    value: String(p.level),
+    name: "🏆 Rank",
+    value: `>>> ${rankEmoji} ${p.rank}`,
     inline: true
   },
 
   {
-    name: "Rank",
-    value: p.rank,
+    name: "📈 Peak Rank",
+    value: `>>> ${peakEmoji} ${p.peakRank}`,
     inline: true
   },
 
   {
-    name: "Peak Rank",
-    value: p.peakRank,
+    name: "💎 RR",
+    value: `>>> ${p.rr}`,
     inline: true
   },
 
   {
-    name: "RR",
-    value: String(p.rr),
+    name: "⚔️ K/D",
+    value: `>>> ${p.kd}`,
     inline: true
   },
 
   {
-    name: "ELO",
-    value: String(p.elo),
+    name: "🎯 HS%",
+    value: `>>> ${p.hsPercent}%`,
     inline: true
   },
 
   {
-    name: "K/D",
-    value: String(p.kd),
+    name: "📊 AVG K/D/A (50 Matches)",
+    value: `>>> ${p.avgKills} / ${p.avgDeaths} / ${p.avgAssists}`,
+    inline: false
+  },
+
+  {
+    name: "🏅 Winrate",
+    value: `>>> ${p.winrate}%`,
     inline: true
   },
 
   {
-    name: "AVG K / D / A (50 Matches)",
-    value: `${p.avgKills}/${p.avgDeaths}/${p.avgAssists}`
-  },
-
-  {
-    name: "HS%",
-    value: `${p.hsPercent}%`,
+    name: "✅ Wins / ❌ Losses",
+    value: `>>> ${p.wins}W / ${p.losses}L`,
     inline: true
   },
 
   {
-    name: "Winrate",
-    value: `${p.winrate}%`,
-    inline: true
-  },
-
-  {
-    name: "Wins / Losses",
-    value: `${p.wins}W / ${p.losses}L`,
-    inline: true
-  },
-
-  {
-    name: "Favorite Agent",
-    value: p.favoriteAgent,
+    name: "🧠 Favourite Agent",
+    value: `>>> ${p.favoriteAgent}`,
     inline: true
   }
 );
