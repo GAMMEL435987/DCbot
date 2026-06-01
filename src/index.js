@@ -394,6 +394,10 @@ const commands = [
     .setDescription("View profile"),
 
   new SlashCommandBuilder()
+  .setName("unlink")
+  .setDescription("Unlink Riot account"),
+
+  new SlashCommandBuilder()
     .setName("leaderboard")
     .setDescription("Server leaderboard"),
 
