@@ -428,7 +428,7 @@ const commands = [
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 
 async function registerCommands() {
-  await rest.put(Routes.applicationCommands(CLIENT_ID), { body: commands });
+  await rest.put(Routes.applicationGuildCommands(CLIENT_ID, "1256395457660325902"), { body: commands });
 }
 
 /* ---------------- READY ---------------- */
@@ -571,9 +571,9 @@ client.on("interactionCreate", async (interaction) => {
     inline: true
   },
 
-  {
-    name: "📈 Peak Rank",
-    value: `>>> ${peakEmoji} ${p.peakRank}`,
+    {
+    name: "🏅 Winrate",
+    value: `>>> ${p.winrate}%`,
     inline: true
   },
 
@@ -586,7 +586,7 @@ client.on("interactionCreate", async (interaction) => {
   {
     name: "⚔️ K/D",
     value: `>>> ${p.kd}`,
-    inline: true
+    inline: false
   },
 
   {
@@ -600,24 +600,6 @@ client.on("interactionCreate", async (interaction) => {
     value: `>>> ${p.avgKills} / ${p.avgDeaths} / ${p.avgAssists}`,
     inline: false
   },
-
-  {
-    name: "🏅 Winrate",
-    value: `>>> ${p.winrate}%`,
-    inline: true
-  },
-
-  {
-    name: "✅ Wins / ❌ Losses",
-    value: `>>> ${p.wins}W / ${p.losses}L`,
-    inline: true
-  },
-
-  {
-    name: "🧠 Favourite Agent",
-    value: `>>> ${p.favoriteAgent}`,
-    inline: true
-  }
 );
 
       return interaction.editReply({ embeds: [embed] });
