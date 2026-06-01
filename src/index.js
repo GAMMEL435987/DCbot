@@ -189,7 +189,8 @@ async function fetchAccount(riotId) {
 async function fetchMatches(riotId) {
   const [name, tag] = riotId.split("#");
 
-  const url = `https://api.henrikdev.xyz/valorant/v4/matches/eu/${name}/${tag}?filter=competitive&size=50`;
+  const url =
+    `https://api.henrikdev.xyz/valorant/v3/matches/eu/${name}/${tag}?filter=competitive&size=50`;
 
   const res = await axios.get(url, {
     headers: {
