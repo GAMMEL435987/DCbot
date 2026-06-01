@@ -162,6 +162,18 @@ async function fetchMMR(riotId) {
   return res.data.data;
 }
 
+async function fetchAccount(riotId) {
+  const [name, tag] = riotId.split("#");
+
+  const url = `https://api.henrikdev.xyz/valorant/v1/account/${name}/${tag}`;
+
+  const res = await axios.get(url, {
+    headers: { Authorization: process.env.HENRIK_API_KEY }
+  });
+
+  return res.data.data;
+}
+
 async function fetchMatches(riotId) {
   const [name, tag] = riotId.split("#");
 
@@ -179,12 +191,34 @@ async function fetchMatches(riotId) {
 function extractMatchStats(matches, riotId) {
   const [name, tag] = riotId.split("#");
 
-  let kills = 0, deaths = 0, assists = 0, wins = 0, losses = 0;
+  let kills = 0;
+  let deaths = 0;
+  let assists = 0;
+
+  let headshots = 0;
+  let bodyshots = 0;
+  let legshots = 0;
+
+  let wins = 0;
+  let losses = 0;
+
   const agentCount = {};
 
   if (!matches) {
-    return { kills: 0, deaths: 0, assists: 0, kd: 0, wins: 0, losses: 0, favoriteAgent: "Unknown" };
+    return {
+      avgKills: 0,
+      avgDeaths: 0,
+      avgAssists: 0,
+      kd: 0,
+      hsPercent: 0,
+      winrate: 0,
+      wins: 0,
+      losses: 0,
+      favoriteAgent: "Unknown"
+    };
   }
+
+  let playedMatches = 0;
 
   for (const match of matches) {
     const players = match.players?.all_players || [];
@@ -196,11 +230,17 @@ function extractMatchStats(matches, riotId) {
 
     if (!player) continue;
 
+    playedMatches++;
+
     const stats = player.stats || {};
 
     kills += stats.kills || 0;
     deaths += stats.deaths || 0;
     assists += stats.assists || 0;
+
+    headshots += stats.headshots || 0;
+    bodyshots += stats.bodyshots || 0;
+    legshots += stats.legshots || 0;
 
     const agent = player.character || "Unknown";
     agentCount[agent] = (agentCount[agent] || 0) + 1;
@@ -209,23 +249,43 @@ function extractMatchStats(matches, riotId) {
     const redWon = match.teams?.red?.has_won;
     const blueWon = match.teams?.blue?.has_won;
 
-    if ((team === "red" && redWon) || (team === "blue" && blueWon)) {
+    if (
+      (team === "red" && redWon) ||
+      (team === "blue" && blueWon)
+    ) {
       wins++;
     } else {
       losses++;
     }
   }
 
+  const totalShots = headshots + bodyshots + legshots;
+
+  const hsPercent = totalShots
+    ? ((headshots / totalShots) * 100).toFixed(1)
+    : 0;
+
+  const winrate = playedMatches
+    ? ((wins / playedMatches) * 100).toFixed(1)
+    : 0;
+
   const favoriteAgent =
-    Object.entries(agentCount).sort((a, b) => b[1] - a[1])[0]?.[0] || "Unknown";
+    Object.entries(agentCount)
+      .sort((a, b) => b[1] - a[1])[0]?.[0] || "Unknown";
 
   return {
-    kills,
-    deaths,
-    assists,
+    avgKills: playedMatches ? (kills / playedMatches).toFixed(1) : 0,
+    avgDeaths: playedMatches ? (deaths / playedMatches).toFixed(1) : 0,
+    avgAssists: playedMatches ? (assists / playedMatches).toFixed(1) : 0,
+
     kd: deaths ? (kills / deaths).toFixed(2) : kills,
+
+    hsPercent,
+    winrate,
+
     wins,
     losses,
+
     favoriteAgent
   };
 }
@@ -266,15 +326,24 @@ async function getPlayer(riotId, discordId) {
 
   try {
     const mmr = (await fetchMMR(riotId)) || {};
+    const account = (await fetchAccount(riotId)) || {};
     const matches = await fetchMatches(riotId);
 
     const matchStats = extractMatchStats(matches, riotId);
 
     const result = {
+      name: account.name || "Unknown",
+      tag: account.tag || "???",
+      level: account.account_level || 0,
+
       rank: mmr.currenttierpatched || "Unranked",
+      peakRank: mmr.highest_rank?.patched_tier || "Unknown",
+
       rr: mmr.ranking_in_tier || 0,
       elo: mmr.elo || 0,
+
       ...matchStats,
+
       lastFetch: Date.now()
     };
 
@@ -446,14 +515,77 @@ client.on("interactionCreate", async (interaction) => {
         .setTitle("📊 Valorant Profile")
         .setColor(0x00ff99)
         .addFields(
-          { name: "Rank", value: p.rank, inline: true },
-          { name: "RR", value: String(p.rr), inline: true },
-          { name: "ELO", value: String(p.elo), inline: true },
-          { name: "K/D", value: String(p.kd), inline: true },
-          { name: "K / D / A", value: `${p.kills}/${p.deaths}/${p.assists}` },
-          { name: "Wins / Losses", value: `${p.wins}W / ${p.losses}L` },
-          { name: "Favorite Agent", value: p.favoriteAgent, inline: true }
-        );
+  {
+    name: "Riot ID",
+    value: `${p.name}#${p.tag}`,
+    inline: true
+  },
+
+  {
+    name: "Level",
+    value: String(p.level),
+    inline: true
+  },
+
+  {
+    name: "Rank",
+    value: p.rank,
+    inline: true
+  },
+
+  {
+    name: "Peak Rank",
+    value: p.peakRank,
+    inline: true
+  },
+
+  {
+    name: "RR",
+    value: String(p.rr),
+    inline: true
+  },
+
+  {
+    name: "ELO",
+    value: String(p.elo),
+    inline: true
+  },
+
+  {
+    name: "K/D",
+    value: String(p.kd),
+    inline: true
+  },
+
+  {
+    name: "AVG K / D / A (50 Matches)",
+    value: `${p.avgKills}/${p.avgDeaths}/${p.avgAssists}`
+  },
+
+  {
+    name: "HS%",
+    value: `${p.hsPercent}%`,
+    inline: true
+  },
+
+  {
+    name: "Winrate",
+    value: `${p.winrate}%`,
+    inline: true
+  },
+
+  {
+    name: "Wins / Losses",
+    value: `${p.wins}W / ${p.losses}L`,
+    inline: true
+  },
+
+  {
+    name: "Favorite Agent",
+    value: p.favoriteAgent,
+    inline: true
+  }
+);
 
       return interaction.editReply({ embeds: [embed] });
     }
