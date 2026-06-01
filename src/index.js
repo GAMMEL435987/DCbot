@@ -75,15 +75,15 @@ const mapImages = {
 /* ---------------- RANK MAP ---------------- */
 
 const rankEmojis = {
-  Iron: "<:iron:YOUR_ID>",
-  Bronze: "<:bronze:YOUR_ID>",
-  Silver: "<:silver:YOUR_ID>",
-  Gold: "<:gold:YOUR_ID>",
-  Platinum: "<:platinum:YOUR_ID>",
-  Diamond: "<:diamond:YOUR_ID>",
-  Ascendant: "<:ascendant:YOUR_ID>",
-  Immortal: "<:immortal:YOUR_ID>",
-  Radiant: "<:radiant:YOUR_ID>"
+  Iron: "<:Iron_3_Rank:1334218151134625804>",
+  Bronze: "<:Bronze_3_Rank:1334218189248266240>",
+  Silver: "<:Silver_3_Rank:1334218206855827607>",
+  Gold: "<:Gold_3_Rank:1334218222848966696>",
+  Platinum: "<:Platinum_3_Rank:1334218238657298507>",
+  Diamond: "<:Diamond_3_Rank:1334218252305563721>",
+  Ascendant: "<:Ascendant_3_Rank:1334218268524806204>",
+  Immortal: "<:Immortal_3_Rank:1334218280411467806>",
+  Radiant: "<:Radiant_Rank:1334218296630841385>"
 };
 
 const rankScore = {
