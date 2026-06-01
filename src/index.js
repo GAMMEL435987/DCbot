@@ -189,7 +189,7 @@ async function fetchAccount(riotId) {
 async function fetchMatches(riotId) {
   const [name, tag] = riotId.split("#");
 
-  const url = `https://api.henrikdev.xyz/valorant/v4/matches/eu/pc/${name}/${tag}?mode=competitive&size=50`;
+  const url = `https://api.henrikdev.xyz/valorant/v4/matches/eu/${name}/${tag}?filter=competitive&size=50`;
 
   const res = await axios.get(url, {
     headers: {
@@ -238,8 +238,7 @@ function extractMatchStats(matches, riotId) {
     const players = match.players || [];
 
     const player = players.find(p =>
-      p.name?.toLowerCase() === name.toLowerCase() &&
-      p.tag?.toLowerCase() === tag.toLowerCase()
+      `${p.name}#${p.tag}`.toLowerCase() === riotId.toLowerCase()
     );
 
     if (!player) continue;
@@ -256,12 +255,12 @@ function extractMatchStats(matches, riotId) {
     bodyshots += player.stats?.bodyshots || 0;
     legshots += player.stats?.legshots || 0;
 
-    const agent = player.character || "Unknown";
+    const agent = player.character?.display_name || "Unknown";
     agentCount[agent] = (agentCount[agent] || 0) + 1;
 
-    const team = player.team?.toLowerCase();
-    const redWon = match.teams?.red?.won;
-    const blueWon = match.teams?.blue?.won;
+    const team = player.team_id?.toLowerCase();
+    const redWon = match.teams?.find(t => t.team_id === "Red")?.won;
+    const blueWon = match.teams?.find(t => t.team_id === "Blue")?.won;
 
     if (
       (team === "red" && redWon) ||
@@ -342,6 +341,7 @@ async function getPlayer(riotId, discordId) {
     const mmr = (await fetchMMR(riotId)) || {};
     const account = (await fetchAccount(riotId)) || {};
     const matches = await fetchMatches(riotId);
+    console.log("MATCH COUNT:", matches.length);
 
     const matchStats = extractMatchStats(matches, riotId);
 
@@ -351,7 +351,7 @@ async function getPlayer(riotId, discordId) {
       level: account.account_level || 0,
 
       rank: mmr.currenttierpatched || "Unranked",
-      peakRank: mmr.highest_rank?.patched_tier || "Unknown",
+      peakRank: mmr.highest_rank?.patched_tier_name || "Unknown",
 
       rr: mmr.ranking_in_tier || 0,
       elo: mmr.elo || 0,
