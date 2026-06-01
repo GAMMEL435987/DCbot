@@ -394,8 +394,8 @@ const commands = [
     .setDescription("View profile"),
 
   new SlashCommandBuilder()
-  .setName("unlink")
-  .setDescription("Unlink Riot account"),
+    .setName("unlink")
+    .setDescription("Unlink Riot account"),
 
   new SlashCommandBuilder()
     .setName("leaderboard")
@@ -614,6 +614,29 @@ client.on("interactionCreate", async (interaction) => {
 
       return interaction.editReply({ embeds: [embed] });
     }
+
+    if (interaction.commandName === "unlink") {
+
+  const userId = interaction.user.id;
+
+  if (!valorantData[userId]) {
+    return interaction.reply({
+      content: "❌ You don't have a linked Riot account.",
+      ephemeral: true
+    });
+  }
+
+  const oldRiotId = valorantData[userId].riotId;
+
+  delete valorantData[userId];
+
+  saveValorantData();
+
+  return interaction.reply({
+    content: `✅ Successfully unlinked **${oldRiotId}**`,
+    ephemeral: true
+  });
+}
 
     if (interaction.commandName === "leaderboard") {
       await interaction.deferReply();
