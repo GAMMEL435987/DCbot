@@ -433,7 +433,15 @@ async function registerCommands() {
 
 /* ---------------- READY ---------------- */
 
-client.once("ready", () => {
+client.once("ready", async () => {
+
+  try {
+    await registerCommands();
+    console.log("✅ Slash commands registered.");
+  } catch (err) {
+    console.error("❌ Command register error:", err);
+  }
+
   console.log(`Logged in as ${client.user.tag}`);
 
   setTimeout(() => {
@@ -441,7 +449,7 @@ client.once("ready", () => {
       activities: [
         {
           name: "Playing Tax Fraud Simulator",
-          type: 0, // Playing
+          type: 0,
         },
       ],
       status: "online",
