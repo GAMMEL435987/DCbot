@@ -566,7 +566,7 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
-    name: "🏆 Current Rank",
+    name: "🏆 Rankㅤㅤㅤ",
     value: `>>> ${rankEmoji} ${p.rank}`,
     inline: true
   },
