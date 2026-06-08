@@ -597,6 +597,12 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
+  name: "\u200B",
+  value: "\u200B",
+  inline: false
+},
+
+  {
     name: "🎖️ Level",
     value: `>>> ${p.level}`,
     inline: true
