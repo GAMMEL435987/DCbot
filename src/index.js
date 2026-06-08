@@ -560,8 +560,8 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
-    name: " ",
-    value: "───────────────",
+    name: "\u200B",
+    value: "\u200B",
     inline: false
   },
 
@@ -578,20 +578,26 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
+    name: "\u200B",
+    value: "\u200B",
+    inline: true
+  },
+
+  {
     name: "💎 RR",
     value: `>>> ${p.rr}`,
     inline: true
   },
 
   {
-    name: "\u200B",
-    value: "\u200B",
-    inline: false
+    name: "🏅 Winrate",
+    value: `>>> ${p.winrate}%`,
+    inline: true
   },
 
   {
-    name: "🏅 Winrate",
-    value: `>>> ${p.winrate}%`,
+    name: "\u200B",
+    value: "\u200B",
     inline: true
   },
 
@@ -610,11 +616,17 @@ client.on("interactionCreate", async (interaction) => {
   {
     name: "\u200B",
     value: "\u200B",
+    inline: true
+  },
+
+  {
+    name: "\u200B",
+    value: "\u200B",
     inline: false
   },
 
   {
-    name: "📊 AVG K / D / A (50 Matches)",
+    name: "📊 AVG K / D / A",
     value: `>>> ${p.avgKills} / ${p.avgDeaths} / ${p.avgAssists}`,
     inline: false
   }
