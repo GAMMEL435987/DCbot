@@ -202,43 +202,6 @@ async function fetchMatches(riotId) {
   return res.data.data;
 }
 
-async function fetchFirstMatch(riotId) {
-
-  const [name, tag] = riotId.split("#");
-
-  let start = 0;
-  let oldestMatch = null;
-
-  while (true) {
-
-    const url =
-`https://api.henrikdev.xyz/valorant/v4/matches/eu/pc/${name}/${tag}?mode=competitive&size=10&start=${start}`;
-
-    const res = await axios.get(url, {
-      headers: {
-        Authorization: process.env.HENRIK_API_KEY
-      }
-    });
-
-    const matches = res.data.data || [];
-
-    if (matches.length === 0) break;
-
-    oldestMatch = matches[matches.length - 1];
-
-    start += 10;
-
-    // Sicherheitslimit
-    if (start > 500) break;
-  }
-
-  if (!oldestMatch) {
-    return "Unknown";
-  }
-
-  return oldestMatch.metadata?.started_at || "Unknown";
-}
-
 /* ---------------- MATCH PARSER ---------------- */
 
 function extractMatchStats(matches, riotId) {
@@ -417,7 +380,6 @@ async function getPlayer(riotId, discordId) {
     const mmr = (await fetchMMR(riotId)) || {};
     const account = (await fetchAccount(riotId)) || {};
     const matches = await fetchMatches(riotId);
-    const firstMatch = await fetchFirstMatch(riotId);
     console.log("MATCHES:", matches.length);
 
     const matchStats = extractMatchStats(matches, riotId);
@@ -425,7 +387,6 @@ async function getPlayer(riotId, discordId) {
     const result = {
       name: account.name || "Unknown",
       tag: account.tag || "???",
-      firstMatch,
       level: account.account_level || 0,
 
       rank: mmr.currenttierpatched || "Unranked",
@@ -622,26 +583,14 @@ client.on("interactionCreate", async (interaction) => {
   }
 }
     if (interaction.commandName === "link") {
+      const riotId = interaction.options.getString("riotid");
 
-  await interaction.deferReply();
+      valorantData[interaction.user.id] = { riotId, history: [] };
+      saveValorantData();
+      valorantData = loadValorantData();
 
-  const riotId = interaction.options.getString("riotid");
-
-  const firstMatch = await fetchFirstMatch(riotId);
-
-  valorantData[interaction.user.id] = {
-    riotId,
-    history: [],
-    firstMatch
-  };
-
-  saveValorantData();
-  valorantData = loadValorantData();
-
-  return interaction.editReply(
-    `✅ Linked **${riotId}**`
-  );
-}
+      return interaction.reply(`✅ Linked **${riotId}**`);
+    }
 
     if (interaction.commandName === "rank") {
 
@@ -698,16 +647,6 @@ client.on("interactionCreate", async (interaction) => {
     value: `>>> ${p.name}#${p.tag}`,
     inline: false
   },
-
-  {
-    name: "📅 First Match",
-    value: `>>> ${
-      u.firstMatch !== "Unknown"
-        ? new Date(u.firstMatch).toLocaleDateString()
-        : "Unknown"
-    }`,
-  inline: true
-},
 
   // { name: "\u200B", value: "\u200B", inline: false},  }
   // Line Space
