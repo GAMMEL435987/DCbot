@@ -554,11 +554,34 @@ client.on("voiceStateUpdate", (oldState, newState) => {
   }
 });
 
+/* ---------------- INTERACTIONS ---------------- */
+
 client.on("interactionCreate", async (interaction) => {
   if (!interaction.isChatInputCommand()) return;
 
   try {
 
+  if (interaction.commandName === "deploy") {
+
+  const ownerId = "DEINE_DISCORD_ID";
+
+  if (interaction.user.id !== ownerId) {
+    return interaction.reply({
+      content: "❌ No permission.",
+      ephemeral: true
+    });
+  }
+
+  await interaction.deferReply({ ephemeral: true });
+
+  try {
+    await registerCommands();
+    return interaction.editReply("✅ Commands redeployed successfully.");
+  } catch (err) {
+    console.error("DEPLOY ERROR:", err);
+    return interaction.editReply("❌ Deploy failed (see console).");
+  }
+}
     if (interaction.commandName === "link") {
       const riotId = interaction.options.getString("riotid");
 
@@ -571,47 +594,12 @@ client.on("interactionCreate", async (interaction) => {
 
     if (interaction.commandName === "rank") {
 
-      await interaction.deferReply();
+  await interaction.deferReply();
 
-      const targetUser =
-        interaction.options.getUser("user") || interaction.user;
+  const targetUser =
+    interaction.options.getUser("user") || interaction.user;
 
-      const u = valorantData[targetUser.id];
-
-    if (interaction.commandName === "deploy") {
-
-  const ownerId = OwnerID_Gammel;
-
-  if (interaction.user.id !== ownerId) {
-    return interaction.reply({
-      content: "❌ No permission.",
-      ephemeral: true
-    });
-  }
-
-  // 🔥 WICHTIG: sofort ACK an Discord
-  await interaction.deferReply({ ephemeral: true });
-
-  try {
-    await registerCommands();
-
-    return interaction.editReply("✅ Commands redeployed successfully.");
-  } catch (err) {
-    console.error("DEPLOY ERROR:", err);
-    return interaction.editReply("❌ Deploy failed (see console).");
-  }
-
-  await interaction.deferReply({ ephemeral: true });
-
-  try {
-    await registerCommands();
-
-    return interaction.editReply("✅ Commands redeployed successfully.");
-  } catch (err) {
-    console.error(err);
-    return interaction.editReply("❌ Redeploy failed.");
-  }
-}
+  valorantData = loadValorantData();
 
   if (!u) {
     return interaction.editReply(
