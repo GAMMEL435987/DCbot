@@ -596,11 +596,8 @@ client.on("interactionCreate", async (interaction) => {
     inline: false
   },
 
-  {
-  name: "\u200B",
-  value: "\u200B",
-  inline: false
-},
+  // { name: "\u200B", value: "\u200B", inline: false},  }
+  // Line Space
 
   {
     name: "🎖️ Level",
