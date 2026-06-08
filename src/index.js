@@ -592,7 +592,7 @@ client.on("interactionCreate", async (interaction) => {
   {
     name: "\u200B",
     value: "\u200B",
-    inline: false
+    inline: true
   },
 
   {
@@ -604,7 +604,7 @@ client.on("interactionCreate", async (interaction) => {
   {
     name: "\u200B",
     value: "\u200B",
-    inline: true
+    inline: false
   },
 
   {
@@ -628,7 +628,7 @@ client.on("interactionCreate", async (interaction) => {
   {
     name: "\u200B",
     value: "\u200B",
-    inline: false
+    inline: true
   },
 
   {
