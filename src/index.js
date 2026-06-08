@@ -566,8 +566,20 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
+    name: "\u200B",
+    value: "\u200B",
+    inline: true
+  },
+
+  {
     name: "🏆 Rank",
     value: `>>> ${rankEmoji} ${p.rank}`,
+    inline: true
+  },
+
+  {
+    name: "\u200B",
+    value: "\u200B",
     inline: true
   },
 
@@ -590,8 +602,20 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
+    name: "\u200B",
+    value: "\u200B",
+    inline: true
+  },
+
+  {
     name: "⚔️ K/D",
     value: `>>> ${p.kd}`,
+    inline: true
+  },
+
+  {
+    name: "\u200B",
+    value: "\u200B",
     inline: true
   },
 
