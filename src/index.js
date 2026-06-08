@@ -5,6 +5,7 @@ const LEVELING_FILE = path.join(__dirname, "../leveling_system_data.json");
 const VALORANT_FILE = path.resolve(process.cwd(), "valorant_data.json");
 let levelingData = loadLevelingData()
 let valorantData = loadValorantData()
+const OwnerID_Gammel = "634106032188293130";
 let dirty = false
 const fs = require("fs");
 const axios = require("axios");
@@ -415,7 +416,7 @@ async function getPlayer(riotId, discordId) {
 
 const commands = [
   new SlashCommandBuilder()
-    .setName("redeploy")
+    .setName("deploy")
     .setDescription("Redeploy slash commands (admin only)"),
 
   new SlashCommandBuilder()
@@ -577,15 +578,27 @@ client.on("interactionCreate", async (interaction) => {
 
       const u = valorantData[targetUser.id];
 
-    if (interaction.commandName === "redeploy") {
+    if (interaction.commandName === "deploy") {
 
-      const ownerId = "634106032188293130";
+  const ownerId = OwnerID_Gammel;
 
-      if (interaction.user.id !== ownerId) {
-        return interaction.reply({
-          content: "❌ No permission.",
-          ephemeral: true
+  if (interaction.user.id !== ownerId) {
+    return interaction.reply({
+      content: "❌ No permission.",
+      ephemeral: true
     });
+  }
+
+  // 🔥 WICHTIG: sofort ACK an Discord
+  await interaction.deferReply({ ephemeral: true });
+
+  try {
+    await registerCommands();
+
+    return interaction.editReply("✅ Commands redeployed successfully.");
+  } catch (err) {
+    console.error("DEPLOY ERROR:", err);
+    return interaction.editReply("❌ Deploy failed (see console).");
   }
 
   await interaction.deferReply({ ephemeral: true });
