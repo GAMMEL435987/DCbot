@@ -335,6 +335,42 @@ async function checkXP(guild) {
   }
 }
 
+const shortRanks = {
+  "Iron 1": "Iron 1",
+  "Iron 2": "Iron 2",
+  "Iron 3": "Iron 3",
+
+  "Bronze 1": "Bronze 1",
+  "Bronze 2": "Bronze 2",
+  "Bronze 3": "Bronze 3",
+
+  "Silver 1": "Silver 1",
+  "Silver 2": "Silver 2",
+  "Silver 3": "Silver 3",
+
+  "Gold 1": "Gold 1",
+  "Gold 2": "Gold 2",
+  "Gold 3": "Gold 3",
+
+  "Platinum 1": "Plat 1",
+  "Platinum 2": "Plat 2",
+  "Platinum 3": "Plat 3",
+
+  "Diamond 1": "Dia 1",
+  "Diamond 2": "Dia 2",
+  "Diamond 3": "Dia 3",
+
+  "Ascendant 1": "Asc 1",
+  "Ascendant 2": "Asc 2",
+  "Ascendant 3": "Asc 3",
+
+  "Immortal 1": "Immo 1",
+  "Immortal 2": "Immo 2",
+  "Immortal 3": "Immo 3",
+
+  "Radiant": "Radiant"
+};
+
 async function getPlayer(riotId, discordId) {
   const cached = cache.get(discordId);
   if (cached?.lastFetch && Date.now() - cached.lastFetch < CACHE_TTL) return cached;
@@ -546,6 +582,7 @@ client.on("interactionCreate", async (interaction) => {
       const peakBase = p.peakRank.split(" ")[0];
 
       const rankEmoji = rankEmojis[rankBase] || "";
+      const shortRank = shortRanks[p.rank] || p.rank;
       const peakEmoji = rankEmojis[peakBase] || "";
       
       const embed = new EmbedBuilder()
@@ -566,8 +603,8 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
-    name: "🏆 Rankㅤㅤㅤ",
-    value: `>>> ${rankEmoji} ${p.rank}`,
+    name: "🏆 Rankㅤㅤ",
+    value: `>>> ${rankEmoji} ${shortRank}`,
     inline: true
   },
 
