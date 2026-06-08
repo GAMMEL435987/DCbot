@@ -589,7 +589,7 @@ client.on("interactionCreate", async (interaction) => {
     inline: true
   },
   {
-    name: "🎯 HS%",
+    name: "🎯 Headshot%",
     value: `>>> ${p.hsPercent}%`,
     inline: true
   },
