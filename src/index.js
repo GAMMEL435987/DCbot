@@ -566,20 +566,8 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
-    name: "\u200B",
-    value: "\u200B",
-    inline: true
-  },
-
-  {
     name: "🏆 Rank",
     value: `>>> ${rankEmoji} ${p.rank}`,
-    inline: true
-  },
-
-  {
-    name: "\u200B",
-    value: "\u200B",
     inline: true
   },
 
@@ -590,21 +578,9 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
-    name: "\u200B",
-    value: "\u200B",
-    inline: true
-  },
-
-  {
     name: "🏅 Winrate",
     value: `>>> ${p.winrate}%`,
     inline: true
-  },
-
-  {
-    name: "\u200B",
-    value: "\u200B",
-    inline: false
   },
 
   {
@@ -612,22 +588,9 @@ client.on("interactionCreate", async (interaction) => {
     value: `>>> ${p.kd}`,
     inline: true
   },
-
-  {
-    name: "\u200B",
-    value: "\u200B",
-    inline: true
-  },
-
   {
     name: "🎯 HS%",
     value: `>>> ${p.hsPercent}%`,
-    inline: true
-  },
-
-  {
-    name: "\u200B",
-    value: "\u200B",
     inline: true
   },
 
