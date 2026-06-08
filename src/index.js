@@ -5,7 +5,7 @@ const LEVELING_FILE = path.join(__dirname, "../leveling_system_data.json");
 const VALORANT_FILE = path.resolve(process.cwd(), "valorant_data.json");
 let levelingData = loadLevelingData()
 let valorantData = loadValorantData()
-const OwnerID_Gammel = "634106032188293130";
+// OwnerID_Gammel = 634106032188293130
 let dirty = false
 const fs = require("fs");
 const axios = require("axios");
@@ -563,7 +563,7 @@ client.on("interactionCreate", async (interaction) => {
 
   if (interaction.commandName === "deploy") {
 
-  const ownerId = "DEINE_DISCORD_ID";
+  const ownerId = "634106032188293130";
 
   if (interaction.user.id !== ownerId) {
     return interaction.reply({
