@@ -415,15 +415,15 @@ async function getPlayer(riotId, discordId) {
 
 const commands = [
   new SlashCommandBuilder()
+    .setName("redeploy")
+    .setDescription("Redeploy slash commands (admin only)"),
+
+  new SlashCommandBuilder()
     .setName("link")
     .setDescription("Link Riot account")
     .addStringOption(o =>
       o.setName("riotid").setDescription("Name#TAG").setRequired(true)
     ),
-
-  new SlashCommandBuilder()
-    .setName("rank")
-    .setDescription("View rank"),
 
   new SlashCommandBuilder()
     .setName("profile")
@@ -436,6 +436,17 @@ const commands = [
   new SlashCommandBuilder()
     .setName("leaderboard")
     .setDescription("Server leaderboard"),
+
+  /* --------- RANK COMMAND ---------- Disabled for now
+  new SlashCommandBuilder()
+  .setName("rank")
+  .setDescription("View rank")
+  .addUserOption(option =>
+    option
+      .setName("user")
+      .setDescription("Check another player's rank")
+      .setRequired(false)
+  ), */
 
   // MAP COMMAND
   new SlashCommandBuilder()
@@ -558,22 +569,62 @@ client.on("interactionCreate", async (interaction) => {
     }
 
     if (interaction.commandName === "rank") {
+
       await interaction.deferReply();
 
-      const u = valorantData[interaction.user.id];
-      if (!u) return interaction.editReply("❌ Not linked.");
+      const targetUser =
+        interaction.options.getUser("user") || interaction.user;
 
-      const p = await getPlayer(u.riotId, interaction.user.id);
-      if (!p) return interaction.editReply("❌ API error.");
+      const u = valorantData[targetUser.id];
 
-      return interaction.editReply(`🎯 **${p.rank} (${p.rr} RR)**`);
-    }
+    if (interaction.commandName === "redeploy") {
+
+      const ownerId = "634106032188293130";
+
+      if (interaction.user.id !== ownerId) {
+        return interaction.reply({
+          content: "❌ No permission.",
+          ephemeral: true
+    });
+  }
+
+  await interaction.deferReply({ ephemeral: true });
+
+  try {
+    await registerCommands();
+
+    return interaction.editReply("✅ Commands redeployed successfully.");
+  } catch (err) {
+    console.error(err);
+    return interaction.editReply("❌ Redeploy failed.");
+  }
+}
+
+  if (!u) {
+    return interaction.editReply(
+      `❌ ${targetUser.username} has not linked a Riot account.`
+    );
+  }
+
+  const p = await getPlayer(u.riotId, targetUser.id);
+
+  if (!p) {
+    return interaction.editReply("❌ API error.");
+  }
+
+  const rankBase = p.rank.split(" ")[0];
+  const rankEmoji = rankEmojis[rankBase] || "";
+
+  return interaction.editReply(
+    `🎯 **${targetUser.username}** is currently ${rankEmoji} **${p.rank} (${p.rr} RR)**`
+  );
+}
 
     if (interaction.commandName === "profile") {
       await interaction.deferReply();
       valorantData = loadValorantData();
       const u = valorantData[interaction.user.id];
-      if (!u || !u.riotId) return interaction.editReply("❌ Not linked.");
+      if (!u || !u.riotId) return interaction.editReply("❌ Not linked. Use /link to connect your Riot account.");
 
       const p = await getPlayer(u.riotId, interaction.user.id);
       if (!p) return interaction.editReply("❌ API error.");
