@@ -560,12 +560,6 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
-    name: "\u200B",
-    value: "\u200B",
-    inline: false
-  },
-
-  {
     name: "🎖️ Level",
     value: `>>> ${p.level}`,
     inline: true
@@ -578,26 +572,20 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
-    name: "\u200B",
-    value: "\u200B",
-    inline: true
-  },
-
-  {
     name: "💎 RR",
     value: `>>> ${p.rr}`,
     inline: true
   },
 
   {
-    name: "🏅 Winrate",
-    value: `>>> ${p.winrate}%`,
-    inline: true
+    name: "\u200B",
+    value: "\u200B",
+    inline: false
   },
 
   {
-    name: "\u200B",
-    value: "\u200B",
+    name: "🏅 Winrate",
+    value: `>>> ${p.winrate}%`,
     inline: true
   },
 
@@ -610,12 +598,6 @@ client.on("interactionCreate", async (interaction) => {
   {
     name: "🎯 HS%",
     value: `>>> ${p.hsPercent}%`,
-    inline: true
-  },
-
-  {
-    name: "\u200B",
-    value: "\u200B",
     inline: true
   },
 
