@@ -560,6 +560,12 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
+    name: " ",
+    value: "───────────────",
+    inline: false
+  },
+
+  {
     name: "🎖️ Level",
     value: `>>> ${p.level}`,
     inline: true
@@ -578,9 +584,15 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
+    name: "\u200B",
+    value: "\u200B",
+    inline: false
+  },
+
+  {
     name: "🏅 Winrate",
     value: `>>> ${p.winrate}%`,
-    inline: false
+    inline: true
   },
 
   {
@@ -596,10 +608,17 @@ client.on("interactionCreate", async (interaction) => {
   },
 
   {
-    name: "📊 AVG K/D/A (50 Matches)",
-    value: `>>> ${p.avgKills} / ${p.avgDeaths} / ${p.avgAssists}`,
+    name: "\u200B",
+    value: "\u200B",
     inline: false
   },
+
+  {
+    name: "📊 AVG K / D / A (50 Matches)",
+    value: `>>> ${p.avgKills} / ${p.avgDeaths} / ${p.avgAssists}`,
+    inline: false
+  }
+
 );
 
       return interaction.editReply({ embeds: [embed] });
