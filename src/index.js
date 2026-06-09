@@ -631,7 +631,7 @@ client.on("interactionCreate", async (interaction) => {
       
       const embed = new EmbedBuilder()
         .setTitle("📊 Valorant Profile")
-        .setColor(0xffd700)
+        .setColor(0xffff00)
         .addFields(
 
   {
