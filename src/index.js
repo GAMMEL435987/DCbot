@@ -822,7 +822,7 @@ ${rankEmoji} ${u.rank} • ${u.rr} RR`
     }).join("\n\n━━━━━━━━━━━━━━\n\n");
 
     return new EmbedBuilder()
-      .setTitle("🏆 Valorant Leaderboard")
+      .setTitle("🏆 ----- Valorant Leaderboard ----- 🏆")
       .setColor(0xffd700)
       .setDescription(description || "No data.")
       .setFooter({
