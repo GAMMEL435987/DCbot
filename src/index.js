@@ -599,7 +599,7 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "rank") {
 
   await interaction.deferReply();
-
+  valorantData = loadValorantData();
   const targetUser =
     interaction.options.getUser("user") || interaction.user;
 
@@ -737,12 +737,13 @@ client.on("interactionCreate", async (interaction) => {
 
     if (!p) continue;
 
-    const baseRank = (p.rank || "Unrated").split(" ")[0];
+    const rankText = p.rank || "Unrated";
+    const baseRank = rankText.split(" ")[0];
 
     results.push({
-      riotId: u.riotId,
-      rank: p.rank,
-      rr: p.rr,
+      riotId: u.riotId || "Unknown",
+      rank: rankText,
+      rr: p.rr || 0,
       score: rankScore[baseRank] || 0
     });
   }
