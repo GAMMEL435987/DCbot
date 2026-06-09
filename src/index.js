@@ -16,7 +16,11 @@ const {
   REST,
   Routes,
   SlashCommandBuilder,
-  ActivityType
+  ActivityType,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ComponentType
 } = require("discord.js");
 
 /* ---------------- CLIENT ---------------- */
@@ -438,7 +442,7 @@ const commands = [
     .setName("leaderboard")
     .setDescription("Server leaderboard"),
 
-  /* --------- RANK COMMAND ---------- Disabled for now
+  /* --------- RANK COMMAND ---------- Disabled for now!!!
   new SlashCommandBuilder()
   .setName("rank")
   .setDescription("View rank")
@@ -721,39 +725,166 @@ client.on("interactionCreate", async (interaction) => {
 }
 
     if (interaction.commandName === "leaderboard") {
-      await interaction.deferReply();
 
-      const results = [];
+  await interaction.deferReply();
 
-      for (const id of Object.keys(valorantData)) {
-        const u = valorantData[id];
-        const p = await getPlayer(u.riotId, id);
-        if (!p) continue;
+  const results = [];
 
-        const baseRank = (p.rank || "Unrated").split(" ")[0];
+  for (const id of Object.keys(valorantData)) {
 
-        results.push({
-          riotId: u.riotId,
-          rank: p.rank,
-          rr: p.rr,
-          score: rankScore[baseRank] || 0
-        });
+    const u = valorantData[id];
+    const p = await getPlayer(u.riotId, id);
+
+    if (!p) continue;
+
+    const baseRank = (p.rank || "Unrated").split(" ")[0];
+
+    results.push({
+      riotId: u.riotId,
+      rank: p.rank,
+      rr: p.rr,
+      score: rankScore[baseRank] || 0
+    });
+  }
+
+  // Sortierung
+  results.sort((a, b) => {
+
+    if (b.score !== a.score) {
+      return b.score - a.score;
+    }
+
+    return b.rr - a.rr;
+  });
+
+  let page = 0;
+  const perPage = 10;
+
+  const generateEmbed = (page) => {
+
+    const start = page * perPage;
+    const current = results.slice(start, start + perPage);
+
+    const description = current.map((u, i) => {
+
+      const globalIndex = start + i + 1;
+
+      const rankBase = u.rank.split(" ")[0];
+      const rankEmoji = rankEmojis[rankBase] || "";
+
+      let placement = `#${globalIndex}`;
+
+      if (globalIndex === 1) {
+        placement = "🥇 **#1**";
+      } else if (globalIndex === 2) {
+        placement = "🥈 **#2**";
+      } else if (globalIndex === 3) {
+        placement = "🥉 **#3**";
       }
 
-      results.sort((a, b) => b.score - a.score);
+      // Top 3 extra groß
+      if (globalIndex <= 3) {
 
-      const embed = new EmbedBuilder()
-        .setTitle("🏆 Leaderboard")
-        .setColor(0xffd700)
-        .setDescription(
-          results.slice(0, 10)
-            .map((u, i) =>
-              `**#${i + 1}** ${u.riotId}\n${u.rank} | ${u.rr} RR`
-            ).join("\n\n") || "No data"
+        return (
+`${placement}
+
+👤 **${u.riotId}**
+${rankEmoji} **${u.rank}** • ${u.rr} RR`
         );
 
-      return interaction.editReply({ embeds: [embed] });
+      }
+
+      // normale Plätze
+      return (
+`**${placement}**
+
+👤 ${u.riotId}
+${rankEmoji} ${u.rank} • ${u.rr} RR`
+      );
+
+    }).join("\n\n━━━━━━━━━━━━━━\n\n");
+
+    return new EmbedBuilder()
+      .setTitle("🏆 Valorant Leaderboard")
+      .setColor(0xffd700)
+      .setDescription(description || "No data.")
+      .setFooter({
+        text:
+`Page ${page + 1} / ${Math.ceil(results.length / perPage)}`
+      });
+
+  };
+
+  const row = new ActionRowBuilder().addComponents(
+
+    new ButtonBuilder()
+      .setCustomId("leaderboard_prev")
+      .setLabel("⬅️ Previous")
+      .setStyle(ButtonStyle.Secondary),
+
+    new ButtonBuilder()
+      .setCustomId("leaderboard_next")
+      .setLabel("Next ➡️")
+      .setStyle(ButtonStyle.Secondary)
+  );
+
+  const msg = await interaction.editReply({
+    embeds: [generateEmbed(page)],
+    components: results.length > perPage ? [row] : []
+  });
+
+  if (results.length <= perPage) return;
+
+  const collector = msg.createMessageComponentCollector({
+    componentType: ComponentType.Button,
+    time: 120000
+  });
+
+  collector.on("collect", async (i) => {
+
+    if (i.user.id !== interaction.user.id) {
+      return i.reply({
+        content: "❌ You can't use these buttons.",
+        ephemeral: true
+      });
     }
+
+    if (i.customId === "leaderboard_prev") {
+
+      page--;
+
+      if (page < 0) {
+        page = Math.ceil(results.length / perPage) - 1;
+      }
+    }
+
+    if (i.customId === "leaderboard_next") {
+
+      page++;
+
+      if (page >= Math.ceil(results.length / perPage)) {
+        page = 0;
+      }
+    }
+
+    await i.update({
+      embeds: [generateEmbed(page)],
+      components: [row]
+    });
+
+  });
+
+  collector.on("end", async () => {
+
+    try {
+
+      await msg.edit({
+        components: []
+      });
+
+    } catch {}
+  });
+}
 
     // MAP COMMAND HANDLER
     if (interaction.commandName === "map") {
