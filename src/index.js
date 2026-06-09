@@ -728,25 +728,41 @@ client.on("interactionCreate", async (interaction) => {
 
   await interaction.deferReply();
 
+  valorantData = loadValorantData();
   const results = [];
 
   for (const id of Object.keys(valorantData)) {
 
+  try {
+
     const u = valorantData[id];
+
+    if (!u?.riotId) continue;
+
     const p = await getPlayer(u.riotId, id);
 
-    if (!p) continue;
+    if (!p || !p.rank) {
+      console.log("FAILED:", u.riotId);
+      continue;
+    }
 
     const rankText = p.rank || "Unrated";
     const baseRank = rankText.split(" ")[0];
 
     results.push({
-      riotId: u.riotId || "Unknown",
+      riotId: u.riotId,
       rank: rankText,
       rr: p.rr || 0,
       score: rankScore[baseRank] || 0
     });
+
+  } catch (err) {
+
+    console.log("LEADERBOARD PLAYER ERROR:");
+    console.log(err);
+
   }
+}
 
   // Sortierung
   results.sort((a, b) => {
