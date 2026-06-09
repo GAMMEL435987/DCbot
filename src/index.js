@@ -222,8 +222,6 @@ function extractMatchStats(matches, riotId) {
   let wins = 0;
   let losses = 0;
 
-  const agentCount = {};
-
   if (!matches) {
     return {
       avgKills: 0,
@@ -234,7 +232,6 @@ function extractMatchStats(matches, riotId) {
       winrate: 0,
       wins: 0,
       losses: 0,
-      favoriteAgent: "Unknown"
     };
   }
 
@@ -262,9 +259,6 @@ function extractMatchStats(matches, riotId) {
     bodyshots += player.stats?.bodyshots || 0;
     legshots += player.stats?.legshots || 0;
 
-    const agent = player.character || "Unknown";
-    agentCount[agent] = (agentCount[agent] || 0) + 1;
-
     const team = player.team?.toLowerCase();
     const redWon = match.teams?.red?.has_won;
     const blueWon = match.teams?.blue?.has_won;
@@ -289,10 +283,6 @@ function extractMatchStats(matches, riotId) {
     ? ((wins / playedMatches) * 100).toFixed(1)
     : 0;
 
-  const favoriteAgent =
-    Object.entries(agentCount)
-      .sort((a, b) => b[1] - a[1])[0]?.[0] || "Unknown";
-
   return {
     avgKills: playedMatches ? (kills / playedMatches).toFixed(1) : 0,
     avgDeaths: playedMatches ? (deaths / playedMatches).toFixed(1) : 0,
@@ -305,8 +295,6 @@ function extractMatchStats(matches, riotId) {
 
     wins,
     losses,
-
-    favoriteAgent
   };
 }
 
@@ -328,11 +316,11 @@ async function checkXP(guild) {
     const hours = u.voiceSeconds / 3600;
     const words = u.words;
 
-    if (hours >= 25 && words >= 1000) { // <---------------------- MVP REQUIREMENTS
+    if (hours >= 50 && words >= 1500) { // <---------------------- MVP REQUIREMENTS
       if (mvpRole && !member.roles.cache.has(mvpRole.id)) {
         await member.roles.add(mvpRole).catch(() => {});
       }
-    } else if (hours >= 10 || words >= 500) { // <---------------------- VIP REQUIREMENTS
+    } else if (hours >= 20 || words >= 1000) { // <---------------------- VIP REQUIREMENTS
       if (vipRole && !member.roles.cache.has(vipRole.id)) {
         await member.roles.add(vipRole).catch(() => {});
       }
@@ -643,7 +631,7 @@ client.on("interactionCreate", async (interaction) => {
       
       const embed = new EmbedBuilder()
         .setTitle("📊 Valorant Profile")
-        .setColor(0x00ff99)
+        .setColor(0xffd700)
         .addFields(
 
   {
