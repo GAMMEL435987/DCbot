@@ -803,7 +803,7 @@ client.on("interactionCreate", async (interaction) => {
       if (globalIndex <= 3) {
 
         return (
-          `${placement} 👤 **${u.riotId}** • ${rankEmoji} **${u.rank}** • **${u.rr}** RR`
+          `${placement} 👤 **${u.riotId}** • ${rankEmoji} **${u.rank}** • **${u.rr} RR**`
         );
       }
 
