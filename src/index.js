@@ -609,7 +609,7 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "link") {
       const riotId = interaction.options.getString("riotid");
 
-      valorantData[interaction.user.id] = { riotId, history: [] };
+      valorantData[interaction.user.id] = { riotId };
       saveValorantData();
       valorantData = loadValorantData();
 
@@ -778,7 +778,6 @@ client.on("interactionCreate", async (interaction) => {
     const baseRank = rankText.split(" ")[0];
 
     results.push({
-      discordId: id,
       riotId: u.riotId,
       rank: rankText,
       rr: p.rr || 0,
@@ -835,14 +834,10 @@ placement = "🥉";
 else
 placement = `#${globalIndex}`;
 
-const dcUser =
-client.users.cache.get(u.discordId);
-
-const dcName =
-dcUser?.username || "Unknown";
+let dcName = "Unknown";
 
 return (
-`${placement} **${u.riotId}** • ${dcName}
+`${placement} **${u.riotId}**
 ${rankEmoji} ${u.rank} • ${u.rr} RR`
 );
 
