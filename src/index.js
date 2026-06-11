@@ -778,7 +778,6 @@ client.on("interactionCreate", async (interaction) => {
     const baseRank = rankText.split(" ")[0];
 
     results.push({
-      discordId: id,
       riotId: u.riotId,
       rank: rankText,
       rr: p.rr || 0,
@@ -813,45 +812,37 @@ client.on("interactionCreate", async (interaction) => {
 
     const description = current.map((u, i) => {
 
-const globalIndex = start + i + 1;
+  const globalIndex = start + i + 1;
 
-const rankBase =
-u.rank.split(" ")[0];
+  const rankBase =
+    u.rank.split(" ")[0];
 
-const rankEmoji =
-rankEmojis[rankBase] || "";
+  const rankEmoji =
+    rankEmojis[rankBase] || "";
 
-let placement;
+  let placement;
 
-if (globalIndex === 1)
-placement = "🥇";
+  if (globalIndex === 1) {
+    placement = "🥇";
+  } else if (globalIndex === 2) {
+    placement = "🥈";
+  } else if (globalIndex === 3) {
+    placement = "🥉";
+  } else {
+    placement = `#${globalIndex}`;
+  }
 
-else if (globalIndex === 2)
-placement = "🥈";
+  const name =
+    `${u.riotId}`
+      .substring(0, 28)
+      .padEnd(30);
 
-else if (globalIndex === 3)
-placement = "🥉";
+  const rank =
+`${rankEmoji} ${u.rank} • ${u.rr} RR`;
 
-else
-placement = `#${globalIndex}`;
+  return `\`${placement} ${name} ${rank}\``;
 
-const dcUser =
-client.users.cache.get(
-Object.keys(valorantData).find(
-key =>
-valorantData[key].riotId === u.riotId
-)
-);
-
-const dcName =
-dcUser?.username || "Unknown";
-
-return (
-`${placement} **${u.riotId}** • ${dcName}
-${rankEmoji} ${u.rank} • ${u.rr} RR`
-);
-
-}).join("\n\n");
+}).join("\n");
 
     return new EmbedBuilder()
       .setTitle("🏆   ▬▬▬▬▬▬   Valorant Leaderboard   ▬▬▬▬▬▬   🏆")
