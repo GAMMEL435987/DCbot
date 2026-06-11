@@ -613,7 +613,7 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "link") {
       const riotId = interaction.options.getString("riotid");
 
-      valorantData[interaction.user.id] = { riotId, history: [] };
+      valorantData[interaction.user.id] = { riotId, discordName: interaction.user.username};
       saveValorantData();
       valorantData = loadValorantData();
 
@@ -814,7 +814,7 @@ client.on("interactionCreate", async (interaction) => {
   let page = 0;
   const perPage = 10;
 
-  const generateEmbed = (page) => {
+  const generateEmbed = async (page) => {
 
     const start = page * perPage;
     const current = results.slice(start, start + perPage);
@@ -843,10 +843,7 @@ placement = "🥉";
 else
 placement = `#${globalIndex}`;
 
-let dcName = "Unknown";
-
-const member = interaction.guild.members.cache.get(u.discordId);
-const dcName = member?.user?.username || "Unknown";
+const dcName = u.discordName || "Unknown";
 
 return (
 `${placement} **${u.riotId}** • ${dcName}
@@ -880,7 +877,7 @@ ${rankEmoji} ${u.rank} • ${u.rr} RR`
   );
 
   const msg = await interaction.editReply({
-    embeds: [generateEmbed(page)],
+    embeds: [await generateEmbed(page)],
     components: results.length > perPage ? [row] : []
   });
 
