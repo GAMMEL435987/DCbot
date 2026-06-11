@@ -516,10 +516,6 @@ client.once("ready", async () => {
 
   console.log(`Logged in as ${client.user.tag}`);
 
-  for (const guild of client.guilds.cache.values()) {
-    await guild.members.fetch().catch(() => {});
-  }
-
   setTimeout(() => {
     client.user.setPresence({
       activities: [
@@ -613,7 +609,7 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "link") {
       const riotId = interaction.options.getString("riotid");
 
-      valorantData[interaction.user.id] = { riotId, discordName: interaction.user.username};
+      valorantData[interaction.user.id] = { riotId, history: [] };
       saveValorantData();
       valorantData = loadValorantData();
 
@@ -755,8 +751,6 @@ client.on("interactionCreate", async (interaction) => {
   valorantData = loadValorantData();
   const results = [];
 
-  await interaction.guild.members.fetch().catch(() => {});
-
   for (const id of Object.keys(valorantData)) {
 
     // TEMPORARY
@@ -814,7 +808,7 @@ client.on("interactionCreate", async (interaction) => {
   let page = 0;
   const perPage = 10;
 
-  const generateEmbed = async (page) => {
+  const generateEmbed = (page) => {
 
     const start = page * perPage;
     const current = results.slice(start, start + perPage);
@@ -843,7 +837,7 @@ placement = "🥉";
 else
 placement = `#${globalIndex}`;
 
-const dcName = u.discordName || "Unknown";
+
 
 return (
 `${placement} **${u.riotId}** • ${dcName}
@@ -877,7 +871,7 @@ ${rankEmoji} ${u.rank} • ${u.rr} RR`
   );
 
   const msg = await interaction.editReply({
-    embeds: [await generateEmbed(page)],
+    embeds: [generateEmbed(page)],
     components: results.length > perPage ? [row] : []
   });
 
