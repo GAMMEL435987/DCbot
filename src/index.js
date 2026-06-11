@@ -833,7 +833,7 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   const name =
-    `👤 ${u.riotId}`
+    `${u.riotId}`
       .substring(0, 28)
       .padEnd(30);
 
