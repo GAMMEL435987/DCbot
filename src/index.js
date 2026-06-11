@@ -832,15 +832,18 @@ client.on("interactionCreate", async (interaction) => {
     placement = `#${globalIndex}`;
   }
 
+  const spacing =
+    "\u2007".repeat(
+    Math.max(2, 32 - u.riotId.length)
+  );
+
   const name =
-    `${u.riotId}`
-      .substring(0, 28)
-      .padEnd(30);
+    `${u.riotId}`;
 
   const rank =
-`${rankEmoji} ${u.rank} • ${u.rr} RR`;
+    `${rankEmoji} ${u.rank} • ${u.rr} RR`;
 
-  return `${placement} ${name} ${rank}`;
+  return `${placement} ${name}${spacing}${rank}`;
 
 }).join("\n");
 
