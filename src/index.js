@@ -516,6 +516,10 @@ client.once("ready", async () => {
 
   console.log(`Logged in as ${client.user.tag}`);
 
+  for (const guild of client.guilds.cache.values()) {
+    await guild.members.fetch().catch(() => {});
+  }
+
   setTimeout(() => {
     client.user.setPresence({
       activities: [
@@ -751,6 +755,8 @@ client.on("interactionCreate", async (interaction) => {
   valorantData = loadValorantData();
   const results = [];
 
+  await interaction.guild.members.fetch().catch(() => {});
+
   for (const id of Object.keys(valorantData)) {
 
     // TEMPORARY
@@ -837,13 +843,10 @@ placement = "🥉";
 else
 placement = `#${globalIndex}`;
 
-const member =
-interaction.guild.members.cache.get(
-u.discordId
-);
+let dcName = "Unknown";
 
-const dcName =
-member?.user?.username || "Unknown";
+const member = interaction.guild.members.cache.get(u.discordId);
+const dcName = member?.user?.username || "Unknown";
 
 return (
 `${placement} **${u.riotId}** • ${dcName}
