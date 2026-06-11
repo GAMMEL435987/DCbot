@@ -364,42 +364,74 @@ const shortRanks = {
   "Radiant": "Radiant"
 };
 
-async function getPlayer(riotId, discordId) {
-  const cached = cache.get(discordId);
-  if (cached?.lastFetch && Date.now() - cached.lastFetch < CACHE_TTL) return cached;
+async function getPlayer(
+  riotId,
+  discordId,
+  includeMatches = true
+) {
+
+  const cacheKey =
+`${discordId}_${includeMatches}`;
+
+  const cached = cache.get(cacheKey);
+
+  if (
+    cached &&
+    Date.now() - cached.lastFetch < CACHE_TTL
+  ) {
+    return cached;
+  }
 
   try {
-    const mmr = (await fetchMMR(riotId)) || {};
-    const account = (await fetchAccount(riotId)) || {};
-    const matches = await fetchMatches(riotId);
-    console.log("MATCHES:", matches.length);
 
-    const matchStats = extractMatchStats(matches, riotId);
+    const mmr =
+      await fetchMMR(riotId);
+
+    let matchStats = {};
+
+    if (includeMatches) {
+
+      const matches =
+        await fetchMatches(riotId);
+
+      matchStats =
+        extractMatchStats(
+          matches,
+          riotId
+        );
+    }
 
     const result = {
-      name: account.name || "Unknown",
-      tag: account.tag || "???",
-      level: account.account_level || 0,
 
-      rank: mmr.currenttierpatched || "Unranked",
-      peakRank:
-        mmr.highest_rank?.patched_tier ||
-        mmr.highest_rank?.patched_tier_name ||
-        "Unknown",
+      rank:
+        mmr.currenttierpatched ||
+        "Unranked",
 
-      rr: mmr.ranking_in_tier || 0,
-      elo: mmr.elo || 0,
+      rr:
+        mmr.ranking_in_tier ||
+        0,
+
+      elo:
+        mmr.elo ||
+        0,
 
       ...matchStats,
 
-      lastFetch: Date.now()
+      lastFetch:
+        Date.now()
     };
 
-    cache.set(discordId, result);
+    cache.set(
+      cacheKey,
+      result
+    );
+
     return result;
 
   } catch (err) {
-    console.error("API ERROR:", err.response?.data || err.message);
+
+    console.log(err);
+
     return null;
   }
 }
@@ -731,7 +763,7 @@ client.on("interactionCreate", async (interaction) => {
 
     if (!u?.riotId) continue;
 
-    const p = await getPlayer(u.riotId, id);
+    const p = await getPlayer(u.riotId, id, false);
 
     // TEMPORARY
     console.log("PLAYER:", u.riotId, p?.rank);
