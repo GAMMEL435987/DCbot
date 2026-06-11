@@ -843,8 +843,18 @@ valorantData[key].riotId === u.riotId
 )
 );
 
-const dcName =
-dcUser?.username || "Unknown";
+let dcName = "Unknown";
+
+try {
+const member =
+await interaction.guild.members.fetch(
+u.discordId
+);
+
+dcName =
+member.user.username;
+
+} catch {}
 
 return (
 `${placement} **${u.riotId}** • ${dcName}
@@ -854,7 +864,7 @@ ${rankEmoji} ${u.rank} • ${u.rr} RR`
 }).join("\n\n");
 
     return new EmbedBuilder()
-      .setTitle("🏆   ▬▬▬▬▬▬   Valorant Leaderboard   ▬▬▬▬▬▬   🏆")
+      .setTitle("🏆 ▬▬▬ Valorant Leaderboard ▬▬▬ 🏆")
       .setColor(0xffd700)
       .setDescription(description || "No data.")
       .setFooter({
