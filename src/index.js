@@ -840,7 +840,7 @@ client.on("interactionCreate", async (interaction) => {
   const rank =
 `${rankEmoji} ${u.rank} • ${u.rr} RR`;
 
-  return `\`${placement} ${name}\`${rank}`;
+  return `\`${placement} ${name} ${rank}\``;
 
 }).join("\n");
 
