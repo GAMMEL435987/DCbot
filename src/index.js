@@ -721,6 +721,10 @@ client.on("interactionCreate", async (interaction) => {
 
   for (const id of Object.keys(valorantData)) {
 
+    // TEMPORARY
+    console.log("USER:", id);
+    console.log(valorantData[id]);
+    // TEMPORARY END
   try {
 
     const u = valorantData[id];
@@ -728,6 +732,10 @@ client.on("interactionCreate", async (interaction) => {
     if (!u?.riotId) continue;
 
     const p = await getPlayer(u.riotId, id);
+
+    // TEMPORARY
+    console.log("PLAYER:", u.riotId, p?.rank);
+    // TEMPORARY END
 
     if (!p || !p.rank) {
       console.log("FAILED:", u.riotId);
