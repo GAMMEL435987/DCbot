@@ -609,7 +609,7 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "link") {
       const riotId = interaction.options.getString("riotid");
 
-      valorantData[interaction.user.id] = { riotId };
+      valorantData[interaction.user.id] = { riotId, history: [] };
       saveValorantData();
       valorantData = loadValorantData();
 
@@ -778,11 +778,12 @@ client.on("interactionCreate", async (interaction) => {
     const baseRank = rankText.split(" ")[0];
 
     results.push({
-      riotId: u.riotId,
-      rank: rankText,
-      rr: p.rr || 0,
-      score: rankScore[baseRank] || 0
-    });
+  discordId: id,
+  riotId: u.riotId,
+  rank: rankText,
+  rr: p.rr || 0,
+  score: rankScore[baseRank] || 0
+});
 
   } catch (err) {
 
@@ -812,39 +813,40 @@ client.on("interactionCreate", async (interaction) => {
 
     const description = current.map((u, i) => {
 
-const globalIndex = start + i + 1;
+  const globalIndex = start + i + 1;
 
-const rankBase =
-u.rank.split(" ")[0];
+  const rankBase =
+    u.rank.split(" ")[0];
 
-const rankEmoji =
-rankEmojis[rankBase] || "";
+  const rankEmoji =
+    rankEmojis[rankBase] || "";
 
-let placement;
+  let placement;
 
-if (globalIndex === 1)
-placement = "🥇";
+  if (globalIndex === 1) {
+    placement = "🥇";
+  } else if (globalIndex === 2) {
+    placement = "🥈";
+  } else if (globalIndex === 3) {
+    placement = "🥉";
+  } else {
+    placement = `#${globalIndex}`;
+  }
 
-else if (globalIndex === 2)
-placement = "🥈";
+  const name =
+    `${u.riotId}`
+      .substring(0, 28)
+      .padEnd(25);
 
-else if (globalIndex === 3)
-placement = "🥉";
+  const rank =
+`${rankEmoji} ${u.rank} • ${u.rr} RR`;
 
-else
-placement = `#${globalIndex}`;
+  return `\`${placement} ${name}\` ${rank}`;
 
-let dcName = "Unknown";
-
-return (
-`${placement} **${u.riotId}**
-${rankEmoji} ${u.rank} • ${u.rr} RR`
-);
-
-}).join("\n\n");
+}).join("\n");
 
     return new EmbedBuilder()
-      .setTitle("🏆 ▬▬▬ Valorant Leaderboard ▬▬▬ 🏆")
+      .setTitle("🏆   ▬▬▬▬▬▬   Valorant Leaderboard   ▬▬▬▬▬▬   🏆")
       .setColor(0xffd700)
       .setDescription(description || "No data.")
       .setFooter({
