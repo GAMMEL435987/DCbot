@@ -812,35 +812,37 @@ client.on("interactionCreate", async (interaction) => {
 
     const description = current.map((u, i) => {
 
-      const globalIndex = start + i + 1;
+  const globalIndex = start + i + 1;
 
-      const rankBase = u.rank.split(" ")[0];
-      const rankEmoji = rankEmojis[rankBase] || "";
+  const rankBase =
+    u.rank.split(" ")[0];
 
-      let placement = `#${globalIndex}`;
+  const rankEmoji =
+    rankEmojis[rankBase] || "";
 
-      if (globalIndex === 1) {
-        placement = "🥇 **#1**";
-      } else if (globalIndex === 2) {
-        placement = "🥈 **#2**";
-      } else if (globalIndex === 3) {
-        placement = "🥉 **#3**";
-      }
+  let placement;
 
-      // Top 3 extra groß
-      if (globalIndex <= 3) {
+  if (globalIndex === 1) {
+    placement = "🥇";
+  } else if (globalIndex === 2) {
+    placement = "🥈";
+  } else if (globalIndex === 3) {
+    placement = "🥉";
+  } else {
+    placement = `#${globalIndex}`;
+  }
 
-        return (
-          `${placement} 👤 **${u.riotId}** • ${rankEmoji} **${u.rank}** • **${u.rr} RR**`
-        );
-      }
+  const name =
+    `👤 ${u.riotId}`
+      .substring(0, 28)
+      .padEnd(30);
 
-      // normale Plätze
-      return (
-        `**${placement}** 👤 ${u.riotId} • ${rankEmoji} ${u.rank} • ${u.rr} RR`
-      );
+  const rank =
+`${rankEmoji} ${u.rank} • ${u.rr} RR`;
 
-    }).join("\n");
+  return `\`${placement} ${name}\`${rank}`;
+
+}).join("\n");
 
     return new EmbedBuilder()
       .setTitle("🏆   ▬▬▬▬▬▬   Valorant Leaderboard   ▬▬▬▬▬▬   🏆")
