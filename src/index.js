@@ -763,7 +763,10 @@ client.on("interactionCreate", async (interaction) => {
 
     if (!u?.riotId) continue;
 
-    const p = await getPlayer(u.riotId, id, false);
+    const p = await getPlayer(
+      u.riotId,
+      false
+    );
 
     // TEMPORARY
     console.log("PLAYER:", u.riotId, p?.rank);
@@ -843,25 +846,12 @@ valorantData[key].riotId === u.riotId
 )
 );
 
-let dcName = "Unknown";
-
-try {
-const member =
-await interaction.guild.members.fetch(
-u.discordId
-);
-
-dcName =
-member.user.username;
-
-} catch {}
-
 const dcName =
 interaction.guild.members.cache
 .get(u.discordId)
 ?.user?.username
 ||
-interaction.client.users.cache
+client.users.cache
 .get(u.discordId)
 ?.username
 ||
