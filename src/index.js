@@ -763,10 +763,7 @@ client.on("interactionCreate", async (interaction) => {
 
     if (!u?.riotId) continue;
 
-    const p = await getPlayer(
-      u.riotId,
-      false
-    );
+    const p = await getPlayer(u.riotId, id, false);
 
     // TEMPORARY
     console.log("PLAYER:", u.riotId, p?.rank);
@@ -847,15 +844,7 @@ valorantData[key].riotId === u.riotId
 );
 
 const dcName =
-interaction.guild.members.cache
-.get(u.discordId)
-?.user?.username
-||
-client.users.cache
-.get(u.discordId)
-?.username
-||
-"Unknown";
+dcUser?.username || "Unknown";
 
 return (
 `${placement} **${u.riotId}** • ${dcName}
@@ -865,7 +854,7 @@ ${rankEmoji} ${u.rank} • ${u.rr} RR`
 }).join("\n\n");
 
     return new EmbedBuilder()
-      .setTitle("🏆 ▬▬▬ Valorant Leaderboard ▬▬▬ 🏆")
+      .setTitle("🏆   ▬▬   Valorant Leaderboard   ▬▬   🏆")
       .setColor(0xffd700)
       .setDescription(description || "No data.")
       .setFooter({
