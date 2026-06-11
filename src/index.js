@@ -785,6 +785,8 @@ client.on("interactionCreate", async (interaction) => {
       score: rankScore[baseRank] || 0
     });
 
+    console.log("SAVED:", id, u.riotId);
+
   } catch (err) {
 
     console.log("LEADERBOARD PLAYER ERROR:");
@@ -835,16 +837,13 @@ placement = "🥉";
 else
 placement = `#${globalIndex}`;
 
-const dcUser =
-client.users.cache.get(
-Object.keys(valorantData).find(
-key =>
-valorantData[key].riotId === u.riotId
-)
+const member =
+interaction.guild.members.cache.get(
+u.discordId
 );
 
 const dcName =
-dcUser?.username || "Unknown";
+member?.user?.username || "Unknown";
 
 return (
 `${placement} **${u.riotId}** • ${dcName}
