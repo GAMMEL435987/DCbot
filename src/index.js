@@ -856,6 +856,17 @@ member.user.username;
 
 } catch {}
 
+const dcName =
+interaction.guild.members.cache
+.get(u.discordId)
+?.user?.username
+||
+interaction.client.users.cache
+.get(u.discordId)
+?.username
+||
+"Unknown";
+
 return (
 `${placement} **${u.riotId}** • ${dcName}
 ${rankEmoji} ${u.rank} • ${u.rr} RR`
