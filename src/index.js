@@ -156,7 +156,6 @@ function ensureXPUser(data, id) {
       words: 0,
       voiceSeconds: 0,
       riotId: null,
-      history: []
     }
   }
 }
@@ -609,7 +608,7 @@ client.on("interactionCreate", async (interaction) => {
     if (interaction.commandName === "link") {
       const riotId = interaction.options.getString("riotid");
 
-      valorantData[interaction.user.id] = { riotId, history: [] };
+      valorantData[interaction.user.id] = { riotId };
       saveValorantData();
       valorantData = loadValorantData();
 
