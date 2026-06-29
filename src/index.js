@@ -384,7 +384,10 @@ async function getPlayer(
   try {
 
     const mmr =
-      await fetchMMR(riotId);
+    await fetchMMR(riotId);
+
+    const account =
+    await fetchAccount(riotId);
 
     let matchStats = {};
 
@@ -400,24 +403,34 @@ async function getPlayer(
         );
     }
 
+    const [name, tag] = riotId.split("#");
+
     const result = {
 
-      rank:
-        mmr.currenttierpatched ||
-        "Unranked",
+      name,
+      tag,
 
-      rr:
-        mmr.ranking_in_tier ||
-        0,
+    level:
+      account.account_level || 0,
 
-      elo:
-        mmr.elo ||
-        0,
+    rank:
+      mmr.currenttierpatched ||
+      "Unrated",
 
-      ...matchStats,
+    peakRank:
+      mmr.highest_rank?.patched_tier ||
+      "Unrated",
 
-      lastFetch:
-        Date.now()
+    rr:
+      mmr.ranking_in_tier || 0,
+
+    elo:
+      mmr.elo || 0,
+
+    ...matchStats,
+
+    lastFetch:
+      Date.now()
     };
 
     cache.set(
@@ -591,11 +604,11 @@ client.on("interactionCreate", async (interaction) => {
   if (interaction.user.id !== ownerId) {
     return interaction.reply({
       content: "❌ No permission.",
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
   }
 
-  await interaction.deferReply({ ephemeral: true });
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   try {
     await registerCommands();
@@ -653,11 +666,14 @@ client.on("interactionCreate", async (interaction) => {
       const p = await getPlayer(u.riotId, interaction.user.id);
       if (!p) return interaction.editReply("❌ API error.");
 
-      const rankBase = p.rank.split(" ")[0];
-      const peakBase = p.peakRank.split(" ")[0];
+      const rank = p.rank || "Unrated";
+      const peakRank = p.peakRank || "Unrated";
+
+      const rankBase = rank.split(" ")[0];
+      const peakBase = peakRank.split(" ")[0];
 
       const rankEmoji = rankEmojis[rankBase] || "";
-      const shortRank = shortRanks[p.rank] || p.rank;
+      const shortRank = shortRanks[rank] || rank;
       const peakEmoji = rankEmojis[peakBase] || "";
       
       const embed = new EmbedBuilder()
@@ -665,69 +681,69 @@ client.on("interactionCreate", async (interaction) => {
         .setColor(0xffff00)
         .addFields(
 
-  {
-    name: "👤 Riot ID",
-    value: `>>> ${p.name}#${p.tag}`,
-    inline: false
-  },
+          {
+            name: "👤 Riot ID",
+            value: `>>> ${p.name}#${p.tag}`,
+            inline: false
+          },
 
-  // { name: "\u200B", value: "\u200B", inline: false},  }
-  // Line Space
+          // { name: "\u200B", value: "\u200B", inline: false},  }
+          // Line Space
 
-  {
-    name: "🎖️ Level",
-    value: `>>> ${p.level}`,
-    inline: true
-  },
+          {
+            name: "🎖️ Level",
+            value: `>>> ${p.level}`,
+            inline: true
+          },
 
-  {
-    name: "🏆 Rankㅤㅤ",
-    value: `>>> ${rankEmoji} ${shortRank}`,
-    inline: true
-  },
+          {
+            name: "🏆 Rankㅤㅤ",
+            value: `>>> ${rankEmoji} ${shortRank}`,
+            inline: true
+          },
 
-  {
-    name: "💎 RR",
-    value: `>>> ${p.rr}`,
-    inline: true
-  },
+          {
+            name: "💎 RR",
+            value: `>>> ${p.rr}`,
+            inline: true
+          },
 
-  {
-    name: "🏅 Winrate",
-    value: `>>> ${p.winrate}%`,
-    inline: true
-  },
+          {
+            name: "🏅 Winrate",
+            value: `>>> ${p.winrate}%`,
+            inline: true
+          },
 
-  {
-    name: "⚔️ K/D",
-    value: `>>> ${p.kd}`,
-    inline: true
-  },
-  {
-    name: "🎯 Headshot%",
-    value: `>>> ${p.hsPercent}%`,
-    inline: true
-  },
+          {
+            name: "⚔️ K/D",
+            value: `>>> ${p.kd}`,
+            inline: true
+          },
 
-  {
-    name: "📊 AVG K / D / A",
-    value: `>>> ${p.avgKills} / ${p.avgDeaths} / ${p.avgAssists}`,
-    inline: false
-  }
+          {
+            name: "🎯 Headshot%",
+            value: `>>> ${p.hsPercent}%`,
+            inline: true
+          },
 
-);
+          {
+            name: "📊 AVG K / D / A",
+            value: `>>> ${p.avgKills} / ${p.avgDeaths} / ${p.avgAssists}`,
+            inline: false
+          }
+        );
 
       return interaction.editReply({ embeds: [embed] });
     }
 
     if (interaction.commandName === "unlink") {
 
-  const userId = interaction.user.id;
+    const userId = interaction.user.id;
 
   if (!valorantData[userId]) {
     return interaction.reply({
       content: "❌ You don't have a linked Riot account.",
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
   }
 
@@ -739,7 +755,7 @@ client.on("interactionCreate", async (interaction) => {
 
   return interaction.reply({
     content: `✅ Successfully unlinked **${oldRiotId}**`,
-    ephemeral: true
+    flags: MessageFlags.Ephemeral
   });
 }
 
@@ -893,7 +909,7 @@ ${rankEmoji} ${u.rank} • ${u.rr} RR`
     if (i.user.id !== interaction.user.id) {
       return i.reply({
         content: "❌ You can't use these buttons.",
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -942,7 +958,7 @@ ${rankEmoji} ${u.rank} • ${u.rr} RR`
   if (!images) {
     return interaction.reply({
       content: "❌ Map not found.",
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
   }
 
