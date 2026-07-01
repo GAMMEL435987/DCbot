@@ -511,23 +511,10 @@ const commands = [
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 
-/* async function registerCommands() {
+async function registerCommands() {
   await rest.put(Routes.applicationGuildCommands(CLIENT_ID, "1256395457660325902"), { body: commands });
-} */
+} 
 
-  async function registerCommands() {
-  // Löscht alle globalen Commands
-  await rest.put(
-    Routes.applicationCommands(CLIENT_ID),
-    { body: [] }
-  );
-
-  // Registriert nur Guild Commands
-  await rest.put(
-    Routes.applicationGuildCommands(CLIENT_ID, "1256395457660325902"),
-    { body: commands }
-  );
-}
 
 /* ---------------- READY ---------------- */
 
