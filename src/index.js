@@ -20,7 +20,8 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ComponentType
+  ComponentType,
+  MessageFlags
 } = require("discord.js");
 
 /* ---------------- CLIENT ---------------- */
@@ -474,7 +475,6 @@ const commands = [
     .setName("leaderboard")
     .setDescription("Server leaderboard"),
 
-  /* --------- RANK COMMAND ---------- Disabled for now!!!
   new SlashCommandBuilder()
   .setName("rank")
   .setDescription("View rank")
@@ -483,7 +483,7 @@ const commands = [
       .setName("user")
       .setDescription("Check another player's rank")
       .setRequired(false)
-  ), */
+  ),
 
   // MAP COMMAND
   new SlashCommandBuilder()
@@ -511,8 +511,22 @@ const commands = [
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_TOKEN);
 
-async function registerCommands() {
+/* async function registerCommands() {
   await rest.put(Routes.applicationGuildCommands(CLIENT_ID, "1256395457660325902"), { body: commands });
+} */
+
+  async function registerCommands() {
+  // Löscht alle globalen Commands
+  await rest.put(
+    Routes.applicationCommands(CLIENT_ID),
+    { body: [] }
+  );
+
+  // Registriert nur Guild Commands
+  await rest.put(
+    Routes.applicationGuildCommands(CLIENT_ID, "1256395457660325902"),
+    { body: commands }
+  );
 }
 
 /* ---------------- READY ---------------- */
@@ -630,18 +644,19 @@ client.on("interactionCreate", async (interaction) => {
 
     if (interaction.commandName === "rank") {
 
-  await interaction.deferReply();
-  valorantData = loadValorantData();
-  const targetUser =
-    interaction.options.getUser("user") || interaction.user;
+      await interaction.deferReply();
+      valorantData = loadValorantData();
+      const targetUser =
+        interaction.options.getUser("user") || interaction.user;
 
-  valorantData = loadValorantData();
+      valorantData = loadValorantData();
+      const u = valorantData[targetUser.id];
 
-  if (!u) {
-    return interaction.editReply(
-      `❌ ${targetUser.username} has not linked a Riot account.`
-    );
-  }
+      if (!u) {
+        return interaction.editReply(
+        `❌ ${targetUser.username} has not linked a Riot account.`
+      );
+    }
 
   const p = await getPlayer(u.riotId, targetUser.id);
 
@@ -653,7 +668,7 @@ client.on("interactionCreate", async (interaction) => {
   const rankEmoji = rankEmojis[rankBase] || "";
 
   return interaction.editReply(
-    `🎯 **${targetUser.username}** is currently ${rankEmoji} **${p.rank} (${p.rr} RR)**`
+    `🏆 **${targetUser.username}** is currently ${rankEmoji} **${p.rank} (${p.rr} RR)**`
   );
 }
 
